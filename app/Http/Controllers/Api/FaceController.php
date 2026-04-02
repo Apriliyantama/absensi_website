@@ -13,120 +13,162 @@ class FaceController extends Controller
     public function register(Request $request)
     {
         $validated = $request->validate([
-            'embedding' => 'required|array',
+            'embedding' => 'required|array|size:128',
+            'is_first_capture' => 'required|boolean',
         ]);
 
-        $user = $request->user(); // sanctum user
+        $user = $request->user();
 
-        $face = FaceEmbedding::updateOrCreate(
-            ['user_id' => $user->id],
-            [
-                'embedding' => $validated['embedding'],
-                'embedding_version' => 'facenet-v1',
-            ]
-        );
+        /**
+         * ✅ reset embedding lama
+         */
+        if ($validated['is_first_capture']) {
+
+            FaceEmbedding::where('user_id', $user->id)->delete();
+
+            Log::info('FACE REGISTER RESET', [
+                'user_id' => $user->id
+            ]);
+        }
+
+        FaceEmbedding::create([
+            'user_id' => $user->id,
+            'embedding' => array_values(
+                array_map('floatval', $validated['embedding'])
+            ),
+        ]);
+
+        $total = FaceEmbedding::where('user_id', $user->id)->count();
 
         return response()->json([
-            'message' => 'Wajah berhasil disimpan',
-            'face_embedding_id' => $face->id,
-            'user_id' => $face->user_id,
-        ], 201);
+            'message' => "Capture berhasil ($total/5)",
+            'total_capture' => $total,
+            'completed' => $total >= 5,
+        ]);
     }
 
     // //Verifikasi Wajah
     public function verify(Request $request)
     {
         $validated = $request->validate([
-            'embedding' => 'required|array',
+            'embedding' => 'required|array|size:128',
         ]);
 
         $user = $request->user();
-        $stored = FaceEmbedding::where('user_id', $user->id)->first();
 
-        if (!$stored) {
+        // ambil semua embedding milik user
+        $storedEmbeddings = FaceEmbedding::where('user_id', $user->id)->get();
+
+        if ($storedEmbeddings->isEmpty()) {
             return response()->json([
-                'message' => 'Belum ada data wajah terdaftar',
-                'match' => 'false',
-                'score' => 'null',
-                'threshold' => 0.75,
+                'message' => 'Belum ada data wajah',
+                'match' => false,
             ], 404);
         }
 
-        Log::info('VERIFY COMPARE', [
-            'user_id' => $user->id,
-            'incoming_head5' => array_slice($validated['embedding'], 0, 5),
-            'stored_head5' => array_slice($stored->embedding, 0, 5),
-            'incoming_count' => count($validated['embedding']),
-            'stored_count' => count($stored->embedding),
-        ]);
+        // normalize incoming embedding
+        $incoming = $this->normalizeEmbedding($validated['embedding']);
 
-        $score = $this->cosineSimilarity($validated['embedding'], $stored->embedding);
-        $threshold = 0.75; // tuning nanti
-        $match = $score >= $threshold;
+        $scores = [];
+
+        foreach ($storedEmbeddings as $saved) {
+
+            $stored = $this->normalizeEmbedding($saved->embedding);
+
+            $score = $this->cosineSimilarity($incoming, $stored);
+
+            Log::info('FACE VERIFY SCORE', [
+                'user_id' => $user->id,
+                'score' => $score,
+            ]);
+
+            $scores[] = $score;
+        }
+
+        // ================= DECISION STRATEGY =================
+
+        $bestScore = max($scores);
+
+        // minimal berapa embedding harus lolos
+        $threshold = 0.80;
+        $requiredPass = 2;
+
+        $passCount = 0;
+
+        foreach ($scores as $s) {
+            if ($s >= $threshold) {
+                $passCount++;
+            }
+        }
+
+        $match = $passCount >= $requiredPass;
+
+        Log::info('FACE VERIFY RESULT', [
+            'best_score' => $bestScore,
+            'pass_count' => $passCount,
+            'match' => $match,
+        ]);
 
         return response()->json([
             'message' => $match ? 'WAJAH COCOK' : 'WAJAH TIDAK COCOK',
             'match' => $match,
-            'score' => round($score, 6),
+            'score' => round($bestScore, 4),
+            'passed_embedding' => $passCount,
             'threshold' => $threshold,
-        ], 200);
+        ]);
     }
 
-    // Helper Cosine Similarity
+    // Normalize Embedding
+    private function normalizeEmbedding(array $vector): array
+    {
+        $sum = 0.0;
+
+        foreach ($vector as $v) {
+            $sum += $v * $v;
+        }
+
+        $norm = sqrt($sum);
+
+        if ($norm == 0) {
+            return $vector;
+        }
+
+        return array_map(function ($v) use ($norm) {
+            return $v / $norm;
+        }, $vector);
+    }
+
+    // Cosine Similarity
     private function cosineSimilarity(array $a, array $b): float
     {
-        // paksa index 0..n-1 & float
         $a = array_values(array_map('floatval', $a));
         $b = array_values(array_map('floatval', $b));
 
-        $n = min(count($a), count($b));
-        if ($n === 0) return 0.0;
+        if (count($a) !== count($b)) {
+            return 0.0;
+        }
 
         $dot = 0.0;
         $normA = 0.0;
         $normB = 0.0;
 
-        for ($i = 0; $i < $n; $i++) {
-            $x = $a[$i];
-            $y = $b[$i];
+        $n = count($a);
 
-            $dot += $x * $y;
-            $normA += $x * $x;
-            $normB += $y * $y;
+        for ($i = 0; $i < $n; $i++) {
+            $dot += $a[$i] * $b[$i];
+            $normA += $a[$i] * $a[$i];
+            $normB += $b[$i] * $b[$i];
         }
 
-        $den = sqrt($normA) * sqrt($normB);
-        if ($den <= 0.0) return 0.0;
+        $denominator = sqrt($normA) * sqrt($normB);
 
-        $sim = $dot / $den;
+        if ($denominator <= 0.0000001) {
+            return 0.0;
+        }
 
-        // clamp untuk floating error
-        if ($sim > 1.0) $sim = 1.0;
-        if ($sim < -1.0) $sim = -1.0;
+        $similarity = $dot / $denominator;
 
-        return $sim;
+        // clamp value
+        return max(-1.0, min(1.0, $similarity));
     }
-    // private function cosineSimilarity(array $a, array $b): float
-    // {
-    //     $n = min(count($a), count($b));
-    //     if ($n === 0) return 0.0;
-
-    //     $dot = 0.0;
-    //     $normA = 0.0;
-    //     $normB = 0.0;
-
-    //     for ($i = 0; $i < $n; $i++) {
-    //         $x = (float) $a[$i];
-    //         $y = (float) $b[$i];
-
-    //         $dot += $x * $y;
-    //         $normA += $x * $y;
-    //         $normB += $x * $y;
-    //     }
-
-    //     $den = sqrt($normA) * sqrt($normB);
-    //     if ($den === 0.0) return 0.0;
-
-    //     return $dot / $den;
-    // }
 }
