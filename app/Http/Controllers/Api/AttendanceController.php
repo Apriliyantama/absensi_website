@@ -29,9 +29,9 @@ class AttendanceController extends Controller
 
         $user = $request->user();
         // 1. cek sudah absen?
-        $already = Attendance::where('user_id', '$user->id')
+        $already = Attendance::where('user_id', $user->id)
             ->whereDate('date', today())
-            ->exist();
+            ->exists();
 
         if ($already) {
             return response()->json([
@@ -39,19 +39,25 @@ class AttendanceController extends Controller
             ], 422);
         }
         // 2. location
-        $locationService = app(LocationService::class);
-        $schoolLat = config('app.school_latitude');
-        $schoolLng = config('app.school_longitude');
-        $radius = config('app.school_radius');
+        $setting = AttendanceSetting::first();
+        if (!$setting){
+            return response()->json([
+                'message' => 'Lokasi absensi belum diatur admin'
+            ], 422);
+        }
+        // $locationService = app(LocationService::class);
+        // $schoolLat = config('app.school_latitude');
+        // $schoolLng = config('app.school_longitude');
+        // $radius = config('app.school_radius');
         
-        $distance = $locationService->calculateDistance(
-            $validated['latidude'],
+        $distance = $this->haversine(
+            $validated['latitude'],
             $validated['longitude'],
-            $schoolLat,
-            $schoolLng
+            $setting->latitude,
+            $setting->longitude
         );
 
-        if ($distance > $radius) {
+        if ($distance > $setting->radius_meter) {
             return response()->json([
                 'message' => 'Anda berada di luar area absensi',
                 'distance' => round($distance, 2)
@@ -72,22 +78,22 @@ class AttendanceController extends Controller
         }
 
         // 4. validasi gps
-        $setting = AttendanceSetting::first();
+        // $setting = AttendanceSetting::first();
 
-        $distance = $this->haversine(
-            $validated['latitude'],
-            $validated['longitude'],
-            $setting->latitude,
-            $setting->longitude
-        );
+        // $distance = $this->haversine(
+        //     $validated['latitude'],
+        //     $validated['longitude'],
+        //     $setting->latitude,
+        //     $setting->longitude
+        // );
 
-        $isValidLocation = $distance <= $setting->radius;
+        // $isValidLocation = $distance <= $setting->radius;
 
-        if (!$isValidLocation) {
-            return response()->json([
-                'message' => 'Diluar area absensi'
-            ], 403);
-        }
+        // if (!$isValidLocation) {
+        //     return response()->json([
+        //         'message' => 'Diluar area absensi'
+        //     ], 403);
+        // }
 
         // 5. simpan absensi
         $attendance = Attendance::create([
