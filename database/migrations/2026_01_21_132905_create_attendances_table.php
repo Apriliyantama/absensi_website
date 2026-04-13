@@ -14,9 +14,15 @@ return new class extends Migration
         Schema::create('attendances', function (Blueprint $table) {
             $table->id();
             $table->foreignId('user_id')->constrained()->cascadeOnDelete();
+
+            $table->foreignId('lesson_schedule_id')
+                ->constrained()
+                ->cascadeOnDelete();
+
             $table->date('date');
             $table->time('check_in_time')->nullable();
-            $table->enum('status', ['hadir', 'izin', 'sakit', 'alpa'])->default('hadir');
+
+            $table->enum('status', ['hadir', 'terlambat', 'izin', 'sakit', 'alpa'])->default('hadir');
             $table->double('latitude')->nullable();
             $table->double('longitude')->nullable();
             $table->double('distance')->nullable();

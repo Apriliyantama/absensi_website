@@ -4,23 +4,31 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-// use Illuminate\Support\Facades\Auth;
-use App\Models\Attendance;
 use App\Models\AttendanceSetting;
 use App\Services\FaceService;
-use App\Services\LocationService;
+use App\Services\AttendanceService;
+use App\Services\LessonScheduleService;
 
 class AttendanceController extends Controller
 {
     public function settings()
     {
-        return response()->json(
-            AttendanceSetting::first()
-        );
+        $setting = \App\Models\AttendanceSetting::first();
+
+        if (!$setting) {
+            return response()->json([
+                'message' => 'Setting lokasi belum diatur'
+            ], 404);
+        }
+
+        return response()->json($setting);
     }
 
-    public function checkIn(Request $request, FaceService $faceService)
-    {
+    public function attend(
+        Request $request,
+        FaceService $faceService,
+        AttendanceService $attendanceService
+    ) {
         $validated = $request->validate([
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
@@ -28,28 +36,17 @@ class AttendanceController extends Controller
         ]);
 
         $user = $request->user();
-        // 1. cek sudah absen?
-        $already = Attendance::where('user_id', $user->id)
-            ->whereDate('date', today())
-            ->exists();
 
-        if ($already) {
-            return response()->json([
-                'message' => 'Anda sudah presensi hari ini'
-            ], 422);
-        }
-        // 2. location
+        // ================= 1. CEK LOKASI =================
         $setting = AttendanceSetting::first();
-        if (!$setting){
+
+        if (!$setting) {
             return response()->json([
+                'status' => 'no_setting',
                 'message' => 'Lokasi absensi belum diatur admin'
             ], 422);
         }
-        // $locationService = app(LocationService::class);
-        // $schoolLat = config('app.school_latitude');
-        // $schoolLng = config('app.school_longitude');
-        // $radius = config('app.school_radius');
-        
+
         $distance = $this->haversine(
             $validated['latitude'],
             $validated['longitude'],
@@ -59,59 +56,81 @@ class AttendanceController extends Controller
 
         if ($distance > $setting->radius_meter) {
             return response()->json([
+                'status' => 'outside_area',
                 'message' => 'Anda berada di luar area absensi',
                 'distance' => round($distance, 2)
             ], 403);
         }
 
-        // 3. verify face
+        // ================= 2. VERIFY WAJAH =================
         $bestScore = $faceService->verifyEmbedding(
             $user->id,
             $validated['embedding']
         );
 
-        $threshold = 0.80;
+        $threshold = $setting->face_threshold ?? 0.8;
+
         if ($bestScore < $threshold) {
             return response()->json([
+                'status' => 'face_not_match',
                 'message' => 'Wajah tidak cocok'
             ], 403);
         }
 
-        // 4. validasi gps
-        // $setting = AttendanceSetting::first();
+        // ================= 3. ABSENSI (ATOMIC ENGINE) =================
+        $result = $attendanceService->attend($user);
 
-        // $distance = $this->haversine(
-        //     $validated['latitude'],
-        //     $validated['longitude'],
-        //     $setting->latitude,
-        //     $setting->longitude
-        // );
+        // ================= 4. TAMBAHAN DATA =================
+        if ($result['success']) {
+            $attendance = $result['data'];
 
-        // $isValidLocation = $distance <= $setting->radius;
+            // update data tambahan (GPS + face score)
+            $attendance->update([
+                'latitude' => $validated['latitude'],
+                'longitude' => $validated['longitude'],
+                'distance' => $distance,
+                'confidence_score' => $bestScore,
+                'method' => 'face',
+            ]);
 
-        // if (!$isValidLocation) {
-        //     return response()->json([
-        //         'message' => 'Diluar area absensi'
-        //     ], 403);
-        // }
+            return response()->json([
+                'success' => true,
+                'status' => $result['status'],
+                'message' => $result['message'],
+                'data' => $attendance,
+            ]);
+        }
 
-        // 5. simpan absensi
-        $attendance = Attendance::create([
-            'user_id' => $user->id,
-            'date' => now()->toDateString(),
-            'check_in_time' => now()->toTimeString(),
-            'latitude' => $validated['latitude'],
-            'longitude' => $validated['longitude'],
-            'distance' => $distance,
-            'confidence_score' => $bestScore,
-            'status' => 'hadir',
-            'method' => 'face',
-        ]);
+        // gagal (no_schedule / already_attended)
+        return response()->json([
+            'success' => false,
+            'status' => $result['status'],
+            'message' => $result['message'],
+        ], 422);
+    }
+
+    public function current(LessonScheduleService $service)
+    {
+        $result = $service->getCurrentLessonWithStatus();
+
+        if (!isset($result['data'])) {
+            return response()->json($result);
+        }
+
+        $schedule = $result['data'];
 
         return response()->json([
-            'message' => 'Presensi berhasil',
-            'data' => $attendance,
-        ], 201);
+            'status' => $result['status'],
+            'message' => $result['message'],
+            'data' => [
+                'id' => $schedule->id,
+                'subject' => $schedule->subject->name,
+                'teacher' => $schedule->teacher->name,
+                'class' => $schedule->class->name,
+                'start_time' => $schedule->start_time,
+                'end_time' => $schedule->end_time,
+            ]
+        ]);
     }
 
     private function haversine($lat1, $lon1, $lat2, $lon2)
@@ -130,6 +149,6 @@ class AttendanceController extends Controller
 
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
 
-        return $earthRadius * $c; //meter
+        return $earthRadius * $c;
     }
 }

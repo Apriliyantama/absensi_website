@@ -8,6 +8,7 @@ class Attendance extends Model
 {
     protected $fillable = [
         'user_id',
+        'lesson_schedule_id',
         'date',
         'check_in_time',
         'latitude',
@@ -17,4 +18,16 @@ class Attendance extends Model
         'status',
         'method',
     ];
+
+    //relasi jadwal
+    public function schedule()
+    {
+        return $this->belongsTo(LessonSchedule::class, 'lesson_schedule_id');
+    }
+
+    //murid
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }
