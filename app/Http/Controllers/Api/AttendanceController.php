@@ -111,6 +111,7 @@ class AttendanceController extends Controller
         ], 422);
     }
 
+    //jadwal aktif saat ini
     public function current(LessonScheduleService $service)
     {
         $result = $service->getCurrentLessonWithStatus();
@@ -129,8 +130,42 @@ class AttendanceController extends Controller
                 'subject' => $schedule->subject->name,
                 'teacher' => $schedule->teacher->name,
                 'class' => $schedule->class->name,
+                'grade' => $schedule->class->grade,
                 'start_time' => $schedule->start_time,
                 'end_time' => $schedule->end_time,
+            ]
+        ]);
+    }
+
+    // jadwal berikutnya
+    public function next()
+    {
+        $now = now();
+
+        // sesuaikan dengan DB kamu (1=Senin)
+        $today = $now->dayOfWeek == 0 ? 7 : $now->dayOfWeek;
+
+        $currentTime = $now->format('H:i:s');
+
+        $next = \App\Models\LessonSchedule::where('day_of_week', $today)
+            ->where('start_time', '>', $currentTime)
+            ->with(['subject'])
+            ->orderBy('start_time')
+            ->first();
+
+        if (!$next) {
+            return response()->json([
+                'finished' => true,
+                'message' => 'Semua mata pelajaran telah selesai di hari ini'
+            ]);
+        }
+
+        return response()->json([
+            'finished' => false,
+            'data' => [
+                'subject' => $next->subject->name,
+                'start_time' => $next->start_time,
+                'end_time' => $next->end_time,
             ]
         ]);
     }
