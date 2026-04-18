@@ -7,6 +7,11 @@ use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\FaceController;
 
 Route::post('/login', [AuthController::class, 'login']);
+Route::post('/register', [AuthController::class, 'register']);
+
+Route::get('/attendance/settings', function () {
+    return \App\Models\AttendanceSetting::first();
+});
 
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/face/register', [FaceController::class, 'register']);

@@ -14,11 +14,15 @@ class TeacherSeeder extends Seeder
     public function run(): void
     {
         Teacher::create([
-            'name' => 'Zeno'
+            'name' => 'Zeno',
+            'nip' => '123456',
+            'email' => 'zeno@gmail.com'
         ]);
 
         Teacher::create([
-            'name' => 'Mawar'
+            'name' => 'Mawar',
+            'nip' => '654321',
+            'email' => 'mawar@gmail.com'
         ]);
     }
 }

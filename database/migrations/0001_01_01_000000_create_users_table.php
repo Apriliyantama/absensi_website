@@ -18,7 +18,7 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
 
-            $table->enum('role', ['admin', 'murid'])->default('murid');
+            $table->enum('role', ['admin', 'teacher', 'student'])->default('student');
             $table->foreignId('class_id')->nullable(); // FK kita tambah belakangan
             $table->boolean('is_active')->default(true);
 

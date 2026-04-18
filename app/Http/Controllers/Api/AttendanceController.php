@@ -97,6 +97,8 @@ class AttendanceController extends Controller
                 'success' => true,
                 'status' => $result['status'],
                 'message' => $result['message'],
+                'distance' => round($distance),
+                'confidence' => $bestScore,
                 'data' => $attendance,
             ]);
         }
