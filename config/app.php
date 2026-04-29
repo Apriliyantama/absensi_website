@@ -32,6 +32,8 @@ return [
     'school_longitude' => env('SCHOOL_LONGITUDE'),
     'school_radius' => env('SCHOOL_RADIUS', 100),
 
+    'attendance_mode' => env('ATTENDANCE_MODE', 'production'),
+
     /*
     |--------------------------------------------------------------------------
     | Application Debug Mode

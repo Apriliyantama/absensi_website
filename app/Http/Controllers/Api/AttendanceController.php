@@ -5,9 +5,11 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\AttendanceSetting;
+use App\Models\Attendance;
 use App\Services\FaceService;
 use App\Services\AttendanceService;
 use App\Services\LessonScheduleService;
+use App\Services\LocationService;
 
 class AttendanceController extends Controller
 {
@@ -27,17 +29,18 @@ class AttendanceController extends Controller
     public function attend(
         Request $request,
         FaceService $faceService,
-        AttendanceService $attendanceService
+        AttendanceService $attendanceService,
+        LocationService $locationService
     ) {
         $validated = $request->validate([
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
-            'embedding' => 'required|array|size:128',
+            'embedding' => 'required|array|size:512',
         ]);
 
         $user = $request->user();
 
-        // ================= 1. CEK LOKASI =================
+        // ================= SETTING =================
         $setting = AttendanceSetting::first();
 
         if (!$setting) {
@@ -47,7 +50,8 @@ class AttendanceController extends Controller
             ], 422);
         }
 
-        $distance = $this->haversine(
+        // ================= LOKASI =================
+        $distance = $locationService->calculateDistance(
             $validated['latitude'],
             $validated['longitude'],
             $setting->latitude,
@@ -62,34 +66,41 @@ class AttendanceController extends Controller
             ], 403);
         }
 
-        // ================= 2. VERIFY WAJAH =================
-        $bestScore = $faceService->verifyEmbedding(
+        // ================= FACE VERIFY =================
+        $faceResult = $faceService->verifyWithThreshold(
             $user->id,
-            $validated['embedding']
+            $validated['embedding'],
+            $setting->face_threshold ?? 0.78,
+            $setting->face_required_pass ?? 3
         );
 
-        $threshold = $setting->face_threshold ?? 0.8;
+        if ($faceResult['reason'] ?? null === 'no_face_data') {
+            return response()->json([
+                'status' => 'no_face_data',
+                'message' => 'Data wajah belum tersedia',
+            ], 422);
+        }
 
-        if ($bestScore < $threshold) {
+        if (!$faceResult['match']) {
             return response()->json([
                 'status' => 'face_not_match',
-                'message' => 'Wajah tidak cocok'
+                'message' => 'Wajah tidak cocok',
+                'passed' => $faceResult['pass_count'],
+                'best_score' => $faceResult['best_score'],
             ], 403);
         }
 
-        // ================= 3. ABSENSI (ATOMIC ENGINE) =================
+        // ================= ATTEND =================
         $result = $attendanceService->attend($user);
 
-        // ================= 4. TAMBAHAN DATA =================
         if ($result['success']) {
             $attendance = $result['data'];
 
-            // update data tambahan (GPS + face score)
             $attendance->update([
                 'latitude' => $validated['latitude'],
                 'longitude' => $validated['longitude'],
                 'distance' => $distance,
-                'confidence_score' => $bestScore,
+                'confidence_score' => $faceResult['best_score'],
                 'method' => 'face',
             ]);
 
@@ -98,12 +109,11 @@ class AttendanceController extends Controller
                 'status' => $result['status'],
                 'message' => $result['message'],
                 'distance' => round($distance),
-                'confidence' => $bestScore,
+                'confidence' => $faceResult['best_score'],
                 'data' => $attendance,
             ]);
         }
 
-        // gagal (no_schedule / already_attended)
         return response()->json([
             'success' => false,
             'status' => $result['status'],
@@ -112,7 +122,7 @@ class AttendanceController extends Controller
     }
 
     //jadwal aktif saat ini
-    public function current(LessonScheduleService $service)
+    public function current(LessonScheduleService $service, AttendanceService $attendanceService)
     {
         $result = $service->getCurrentLessonWithStatus();
 
@@ -121,6 +131,13 @@ class AttendanceController extends Controller
         }
 
         $schedule = $result['data'];
+
+        $user = request()->user();
+
+        $attendance = $attendanceService->getTodayAttendance(
+            $user->id,
+            $schedule->id
+        );
 
         return response()->json([
             'status' => $result['status'],
@@ -133,6 +150,11 @@ class AttendanceController extends Controller
                 'grade' => $schedule->class->grade,
                 'start_time' => $schedule->start_time,
                 'end_time' => $schedule->end_time,
+
+                'attendance' => $attendance ? [
+                    'status' => $attendance->status,
+                    'check_in_time' => $attendance->check_in_time,
+                ] : null,
             ]
         ]);
     }
@@ -170,22 +192,20 @@ class AttendanceController extends Controller
         ]);
     }
 
-    private function haversine($lat1, $lon1, $lat2, $lon2)
+    public function todayStatus(Request $request)
     {
-        $earthRadius = 6371000;
+        $user = $request->user();
 
-        $dLat = deg2rad($lat2 - $lat1);
-        $dLon = deg2rad($lon2 - $lon1);
+        $attendance = Attendance::where('user_id', $user->id)
+            ->where('date', today()->toDateString())
+            ->latest()
+            ->first();
 
-        $a =
-            sin($dLat / 2) * sin($dLat / 2) +
-            cos(deg2rad($lat1)) *
-            cos(deg2rad($lat2)) *
-            sin($dLon / 2) *
-            sin($dLon / 2);
-
-        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
-
-        return $earthRadius * $c;
+        return response()->json([
+            'attendance' => $attendance ? [
+                'status' => $attendance->status,
+                'check_in_time' => $attendance->check_in_time,
+            ] : null
+        ]);
     }
 }

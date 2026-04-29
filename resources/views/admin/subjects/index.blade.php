@@ -6,17 +6,23 @@
 
 @section('content')
 
-    <button class="btn btn-primary mb-3" id="add">Tambah Mapel</button>
+<br>
+<h4>Tabel Mata Pelajaran</h4>
+    <div class="card">
+        <div class="card-body">
+            <button class="btn btn-primary mb-3" id="add">Tambah Mapel</button>
 
-    <table id="table" class="table table-bordered">
-        <thead>
-            <tr>
-                <th>No</th>
-                <th>Nama Mapel</th>
-                <th>Aksi</th>
-            </tr>
-        </thead>
-    </table>
+            <table id="table" class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Nama Mapel</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
 
     <!-- Modal -->
     <div class="modal fade" id="modal">

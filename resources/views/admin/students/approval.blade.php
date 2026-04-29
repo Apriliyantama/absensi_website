@@ -5,20 +5,25 @@
 @section('plugins.Datatables', true)
 
 @section('content')
-    <h4>Validasi Murid</h4>
+    <br>
+    <h4>Tabel Validasi Murid</h4>
 
-    <table id="table" class="table table-bordered">
-        <thead>
-            <tr>
-                <th>No</th>
-                <th>Nama</th>
-                <th>Email</th>
-                <th>NIS</th>
-                <th>Kelas</th>
-                <th>Aksi</th>
-            </tr>
-        </thead>
-    </table>
+    <div class="card">
+        <div class="card-body">
+            <table id="table" class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Nama</th>
+                        <th>Email</th>
+                        <th>NIS</th>
+                        <th>Kelas</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
 @stop
 
 @section('js')

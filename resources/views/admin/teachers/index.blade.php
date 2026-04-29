@@ -5,19 +5,26 @@
 @section('plugins.Datatables', true)
 
 @section('content')
-    <button class="btn btn-primary mb-3" id="add">Tambah Guru</button>
+    <br>
+    <h4>Tabel Pengajar</h4>
 
-    <table id="table" class="table table-bordered">
-        <thead>
-            <tr>
-                <th>No</th>
-                <th>Nama</th>
-                <th>Nip</th>
-                <th>Email</th>
-                <th>Action</th>
-            </tr>
-        </thead>
-    </table>
+    <div class="card">
+        <div class="card-body">
+            <button class="btn btn-primary mb-3" id="add">Tambah Guru</button>
+
+            <table id="table" class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Nama</th>
+                        <th>NIP/NIK</th>
+                        <th>Email</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
 
     <!-- Modal -->
     <div class="modal fade" id="modalForm">
@@ -41,7 +48,7 @@
                         </div>
 
                         <div class="form-group">
-                            <label>NIP</label>
+                            <label>NIP/NIK</label>
                             <input type="text" id="nip" class="form-control">
                         </div>
 

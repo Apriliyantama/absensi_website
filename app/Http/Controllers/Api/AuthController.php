@@ -53,7 +53,7 @@ class AuthController extends Controller
             'class_id' => 'required|exists:classes,id',
         ]);
 
-        // 🔥 simpan user
+        // simpan user
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
@@ -62,7 +62,7 @@ class AuthController extends Controller
             'status' => 'pending'
         ]);
 
-        // 🔥 simpan student
+        // simpan student
         Student::create([
             'user_id' => $user->id,
             'name' => $request->name,

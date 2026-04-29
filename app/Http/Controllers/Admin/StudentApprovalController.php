@@ -19,7 +19,7 @@ class StudentApprovalController extends Controller
         $query = User::with(['student.classRelation', 'student.requestedClass'])
             ->where('role', 'student')
             ->where('status', 'pending')
-            ->whereHas('student'); // 🔥 wajib
+            ->whereHas('student');
 
         $classes = \App\Models\Classes::all();
 

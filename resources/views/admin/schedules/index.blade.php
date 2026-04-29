@@ -5,22 +5,28 @@
 @section('plugins.Datatables', true)
 
 @section('content')
+    <br>
+    <h4>Tabel Jadwal</h4>
 
-    <button class="btn btn-primary mb-3" id="add">Tambah Jadwal</button>
+    <div class="card">
+        <div class="card-body">
+            <button class="btn btn-primary mb-3" id="add">Tambah Jadwal</button>
 
-    <table id="table" class="table table-bordered">
-        <thead>
-            <tr>
-                <th>No</th>
-                <th>Kelas</th>
-                <th>Mapel</th>
-                <th>Guru</th>
-                <th>Hari</th>
-                <th>Jam</th>
-                <th>Aksi</th>
-            </tr>
-        </thead>
-    </table>
+            <table id="table" class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Kelas</th>
+                        <th>Mapel</th>
+                        <th>Guru</th>
+                        <th>Hari</th>
+                        <th>Jam</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
 
     <!-- MODAL -->
     <div class="modal fade" id="modal">

@@ -6,24 +6,28 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Models\FaceEmbedding;
+use App\Services\FaceService;
 
 class FaceController extends Controller
 {
-    // Daftarkan Wajah
+    protected $faceService;
+
+    public function __construct(FaceService $faceService)
+    {
+        $this->faceService = $faceService;
+    }
+
+    // ================= REGISTER =================
     public function register(Request $request)
     {
         $validated = $request->validate([
-            'embedding' => 'required|array|size:128',
+            'embedding' => 'required|array|size:512',
             'is_first_capture' => 'required|boolean',
         ]);
 
         $user = $request->user();
 
-        /**
-         * ✅ reset embedding lama
-         */
         if ($validated['is_first_capture']) {
-
             FaceEmbedding::where('user_id', $user->id)->delete();
 
             Log::info('FACE REGISTER RESET', [
@@ -47,52 +51,57 @@ class FaceController extends Controller
         ]);
     }
 
-    // //Verifikasi Wajah
+    // ================= VERIFY =================
     public function verify(Request $request)
     {
+        $mode = config('app.attendance_mode');
+
         $validated = $request->validate([
-            'embedding' => 'required|array|size:128',
+            'embedding' => 'required|array|size:512',
         ]);
 
         $user = $request->user();
 
-        // ambil semua embedding milik user
-        $storedEmbeddings = FaceEmbedding::where('user_id', $user->id)->get();
+        // TEST MODE SUPPORT
+        if (!$user && $mode === 'test') {
+            $userId = $request->input('user_id');
 
-        if ($storedEmbeddings->isEmpty()) {
+            if (!$userId) {
+                return response()->json([
+                    'message' => 'user_id required for testing'
+                ], 400);
+            }
+
+            $user = (object) ['id' => $userId];
+        }
+
+        if (!$user) {
             return response()->json([
-                'message' => 'Belum ada data wajah',
-                'match' => false,
-            ], 404);
+                'message' => 'Unauthorized'
+            ], 401);
         }
 
-        // normalize incoming embedding
-        $incoming = $this->normalizeEmbedding($validated['embedding']);
+        // ================= AMBIL SETTING =================
+        if ($mode === 'production') {
+            $setting = \App\Models\AttendanceSetting::first();
 
-        $scores = [];
-
-        foreach ($storedEmbeddings as $saved) {
-
-            $stored = $this->normalizeEmbedding($saved->embedding);
-
-            $score = $this->cosineSimilarity($incoming, $stored);
-
-            Log::info('FACE VERIFY SCORE', [
-                'user_id' => $user->id,
-                'score' => $score,
-            ]);
-
-            $scores[] = $score;
+            $threshold = $setting->face_threshold ?? 0.78;
+            $requiredPass = $setting->face_required_pass ?? 3;
+        } else {
+            $threshold = 0.70;
+            $requiredPass = 1;
         }
 
-        // ================= DECISION STRATEGY =================
+        // ================= PANGGIL SERVICE =================
+        $result = $this->faceService->verifyEmbedding(
+            $user->id,
+            $validated['embedding']
+        );
 
-        $bestScore = max($scores);
+        $scores = $result['scores'];
+        $bestScore = $result['best_score'];
 
-        // minimal berapa embedding harus lolos
-        $threshold = 0.80;
-        $requiredPass = 2;
-
+        // ================= HITUNG PASS =================
         $passCount = 0;
 
         foreach ($scores as $s) {
@@ -103,8 +112,12 @@ class FaceController extends Controller
 
         $match = $passCount >= $requiredPass;
 
-        Log::info('FACE VERIFY RESULT', [
+        // ================= LOG =================
+        Log::info('FACE VERIFY DETAIL', [
+            'user_id' => $user->id,
+            'scores' => $scores,
             'best_score' => $bestScore,
+            'threshold' => $threshold,
             'pass_count' => $passCount,
             'match' => $match,
         ]);
@@ -112,63 +125,10 @@ class FaceController extends Controller
         return response()->json([
             'message' => $match ? 'WAJAH COCOK' : 'WAJAH TIDAK COCOK',
             'match' => $match,
+            'mode' => $mode,
             'score' => round($bestScore, 4),
             'passed_embedding' => $passCount,
             'threshold' => $threshold,
         ]);
-    }
-
-    // Normalize Embedding
-    private function normalizeEmbedding(array $vector): array
-    {
-        $sum = 0.0;
-
-        foreach ($vector as $v) {
-            $sum += $v * $v;
-        }
-
-        $norm = sqrt($sum);
-
-        if ($norm == 0) {
-            return $vector;
-        }
-
-        return array_map(function ($v) use ($norm) {
-            return $v / $norm;
-        }, $vector);
-    }
-
-    // Cosine Similarity
-    private function cosineSimilarity(array $a, array $b): float
-    {
-        $a = array_values(array_map('floatval', $a));
-        $b = array_values(array_map('floatval', $b));
-
-        if (count($a) !== count($b)) {
-            return 0.0;
-        }
-
-        $dot = 0.0;
-        $normA = 0.0;
-        $normB = 0.0;
-
-        $n = count($a);
-
-        for ($i = 0; $i < $n; $i++) {
-            $dot += $a[$i] * $b[$i];
-            $normA += $a[$i] * $a[$i];
-            $normB += $b[$i] * $b[$i];
-        }
-
-        $denominator = sqrt($normA) * sqrt($normB);
-
-        if ($denominator <= 0.0000001) {
-            return 0.0;
-        }
-
-        $similarity = $dot / $denominator;
-
-        // clamp value
-        return max(-1.0, min(1.0, $similarity));
     }
 }

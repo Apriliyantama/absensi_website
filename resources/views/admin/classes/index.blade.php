@@ -5,18 +5,24 @@
 @section('plugins.Datatables', true)
 
 @section('content')
+    <br>
+    <h4>Tabel Kelas</h4>
 
-    <button class="btn btn-primary mb-3" id="add">Tambah Kelas</button>
+    <div class="card">
+        <div class="card-body">
+            <button class="btn btn-primary mb-3" id="add">Tambah Kelas</button>
 
-    <table id="table" class="table table-bordered">
-        <thead>
-            <tr>
-                <th>No</th>
-                <th>Kelas</th>
-                <th>Aksi</th>
-            </tr>
-        </thead>
-    </table>
+            <table id="table" class="table table-bordered">
+                <thead>
+                    <tr>
+                        <th>No</th>
+                        <th>Kelas</th>
+                        <th>Aksi</th>
+                    </tr>
+                </thead>
+            </table>
+        </div>
+    </div>
 
 
     {{-- Modal --}}
