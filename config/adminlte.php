@@ -320,41 +320,58 @@ return [
             'url' => 'admin/blog',
             'can' => 'manage-blog',
         ],
+        // ===== ADMIN MENU =====
         [
             'text' => 'Dashboard',
             'url' => 'admin/dashboard',
             'icon' => 'fas fa-tachometer-alt',
+            'can' => 'admin'
         ],
         [
             'text' => 'Teacher',
             'url' => 'admin/teachers',
             'icon' => 'fas fa-user-tie',
+            'can' => 'admin'
         ],
         [
             'text' => 'Validasi Murid',
             'url' => 'admin/students/approval',
             'icon' => 'fas fa-user-check',
+            'can' => 'admin'
         ],
         [
             'text' => 'Kelas',
             'url' => 'admin/classes',
             'icon' => 'fas fa-school',
+            'can' => 'admin'
         ],
         [
             'text' => 'Mata Pelajaran',
             'url' => 'admin/subjects',
             'icon' => 'fas fa-book',
+            'can' => 'admin'
         ],
         [
             'text' => 'Jadwal Pelajaran',
             'url' => 'admin/schedules',
             'icon' => 'fas fa-clock',
+            'can' => 'admin'
         ],
         [
             'text' => 'Setting GPS',
             'url' => 'admin/attendance-setting',
             'icon' => 'fas fa-map-marker-alt',
+            'can' => 'admin'
         ],
+
+        // ===== TEACHER MENU =====
+        [
+            'text' => 'Dashboard Guru',
+            'url' => 'teacher/dashboard',
+            'icon' => 'fas fa-chalkboard-teacher',
+            'can' => 'teacher'
+        ],
+
         ['header' => 'account_settings'],
         [
             'text' => 'profile',

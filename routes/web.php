@@ -8,15 +8,42 @@ use App\Http\Controllers\Admin\ClassController;
 use App\Http\Controllers\Admin\SubjectController;
 use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\Admin\AttendanceSettingController;
+use App\Http\Controllers\Teacher\TeacherDashboardController;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Auth;
 
 Route::get('/', function () {
-    return view('welcome');
+    if (Auth::check()) {
+        return Auth::user()->role === 'admin'
+            ? redirect('/admin/dashboard')
+            : redirect('/teacher/dashboard');
+    }
+
+    return redirect()->route('login');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+//test aja
+Route::get('/force-logout', function () {
+    auth()->logout();
+    session()->invalidate();
+    session()->regenerateToken();
+    return redirect('/login');
+});
+//test aja
+Route::get('/check-auth', function () {
+    return [
+        'check' => auth()->check(),
+        'user' => auth()->user()
+    ];
+});
+
+// Route::get('/', function () {
+//     return view('auth.login');
+// });
+
+// Route::get('/dashboard', function () {
+//     return view('dashboard');
+// })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::get('/check-mode', function () {
     return config('app.attendance_mode');
@@ -100,6 +127,11 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         Route::post('/store', [AttendanceSettingController::class, 'store'])
             ->name('store');
     });
+});
+
+Route::middleware(['auth', 'teacher'])->prefix('teacher')->name('teacher.')->group(function () {
+    Route::get('/dashboard', [TeacherDashboardController::class, 'index'])
+        ->name('dashboard');
 });
 
 require __DIR__ . '/auth.php';

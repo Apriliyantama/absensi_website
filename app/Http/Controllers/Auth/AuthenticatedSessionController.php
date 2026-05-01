@@ -22,13 +22,34 @@ class AuthenticatedSessionController extends Controller
     /**
      * Handle an incoming authentication request.
      */
+
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
 
         $request->session()->regenerate();
 
-        return redirect()->intended('/admin/dashboard');
+        $user = Auth::user();
+
+        // ❗ CEK STATUS DULU
+        if ($user->status !== 'approved') {
+            Auth::logout();
+
+            return redirect('/login')->withErrors([
+                'email' => 'Akun Anda belum disetujui',
+            ]);
+        }
+
+        // ROLE REDIRECT
+        if ($user->role === 'admin') {
+            return redirect('/admin/dashboard');
+        }
+
+        if ($user->role === 'teacher') {
+            return redirect('/teacher/dashboard');
+        }
+
+        return redirect('/');
     }
 
     /**
@@ -42,6 +63,6 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect('/');
+        return redirect('/login');
     }
 }

@@ -10,10 +10,16 @@ class Teacher extends Model
         'name',
         'nip',
         'email',
+        'user_id',
     ];
 
     public function lessonSchedules()
     {
         return $this->hasMany(LessonSchedule::class);
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
     }
 }

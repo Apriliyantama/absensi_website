@@ -22,6 +22,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'auth' => \Illuminate\Auth\Middleware\Authenticate::class,
             'sanctum' => \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
+            'teacher' => \App\Http\Middleware\TeacherMiddleware::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

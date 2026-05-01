@@ -139,18 +139,32 @@
                 name: $('#name').val(),
                 nip: $('#nip').val(),
                 email: $('#email').val()
-            }, function() {
+            }, function(res) {
+
                 $('#modalForm').modal('hide');
                 $('#table').DataTable().ajax.reload();
 
-                swal.fire({
-                    icon: 'success',
-                    title: 'Berhasil!',
-                    text: save_method == 'add' ?
-                        'Data Guru berhasil ditambahkan' : 'Data Guru berhasil diupdate',
-                    timer: 2000,
-                    showConfirmButton: false
-                });
+                //kondisi add vs edit
+                if (save_method == 'add') {
+
+                    Swal.fire({
+                        title: 'Akun Guru Dibuat',
+                        html: `
+                            Email: ${$('#email').val()}<br>
+                            Password: <b>${res.password}</b>
+                        `,
+                        icon: 'success'
+                    });
+
+                } else {
+                    swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil!',
+                        text: 'Data Guru berhasil diupdate',
+                        timer: 2000,
+                        showConfirmButton: false
+                    });
+                }
             });
         });
 
