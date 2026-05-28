@@ -22,7 +22,6 @@ return new class extends Migration
 
             $table->string('name');
             $table->string('nis')->unique();
-            $table->string('class')->nullable();
 
             $table->string('gender')->nullable();
             $table->date('birth_date')->nullable();

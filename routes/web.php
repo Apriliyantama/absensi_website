@@ -9,6 +9,8 @@ use App\Http\Controllers\Admin\SubjectController;
 use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\Admin\AttendanceSettingController;
 use App\Http\Controllers\Teacher\TeacherDashboardController;
+use App\Http\Controllers\Teacher\AttendanceOverviewController;
+use App\Http\Controllers\Teacher\AttendanceSessionController;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Auth;
 
@@ -22,20 +24,20 @@ Route::get('/', function () {
     return redirect()->route('login');
 });
 
-//test aja
-Route::get('/force-logout', function () {
-    auth()->logout();
-    session()->invalidate();
-    session()->regenerateToken();
-    return redirect('/login');
-});
-//test aja
-Route::get('/check-auth', function () {
-    return [
-        'check' => auth()->check(),
-        'user' => auth()->user()
-    ];
-});
+// DEBUG TEST ONLY
+// Route::get('/force-logout', function () {
+//     auth()->logout();
+//     session()->invalidate();
+//     session()->regenerateToken();
+//     return redirect('/login');
+// });
+// DEBUG TEST ONLY
+// Route::get('/check-auth', function () {
+//     return [
+//         'check' => auth()->check(),
+//         'user' => auth()->user()
+//     ];
+// });
 
 // Route::get('/', function () {
 //     return view('auth.login');
@@ -132,6 +134,24 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 Route::middleware(['auth', 'teacher'])->prefix('teacher')->name('teacher.')->group(function () {
     Route::get('/dashboard', [TeacherDashboardController::class, 'index'])
         ->name('dashboard');
+
+    Route::post('/attendance/start', [\App\Http\Controllers\Teacher\AttendanceSessionController::class, 'start'])
+        ->name('attendance.start');
+
+    Route::post('/attendance/end/{id}', [\App\Http\Controllers\Teacher\AttendanceSessionController::class, 'end'])
+        ->name('attendance.end');
+
+    Route::get('/attendance-overview', [AttendanceOverviewController::class, 'index'])
+        ->name('attendance.overview');
+
+    Route::get('/attendance-overview/{id}', [AttendanceOverviewController::class, 'show'])
+        ->name('attendance.overview.show');
+
+    Route::post('/attendance/update-status', [AttendanceSessionController::class, 'updateStatus'])
+        ->name('attendance.update-status');
+
+    Route::post('/attendance-session/end/{id}', [AttendanceSessionController::class, 'end'])
+        ->name('attendance.end');
 });
 
 require __DIR__ . '/auth.php';

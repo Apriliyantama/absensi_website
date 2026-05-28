@@ -89,12 +89,15 @@ class StudentApprovalController extends Controller
         }
 
         // update status
-        $user->status = 'approved';
-        $user->save();
+        $user->update([
+            'status' => 'approved',
+            'class_id' => $request->class_id,
+        ]);
 
-        // update class
-        $user->student->class_id = $request->class_id;
-        $user->student->save();
+        // sync
+        $user->student->update([
+            'class_id' => $request->class_id
+        ]);
 
         return response()->json([
             'success' => true,

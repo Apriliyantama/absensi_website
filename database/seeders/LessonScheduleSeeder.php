@@ -23,7 +23,6 @@ class LessonScheduleSeeder extends Seeder
                 'day_of_week' => 2, // Selasa
                 'start_time' => '08:00:00',
                 'end_time' => '09:30:00',
-                'tolerance_minutes' => 15,
                 'is_active' => true,
             ]
         );

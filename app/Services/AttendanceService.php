@@ -5,11 +5,9 @@ namespace App\Services;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\Attendance;
+use App\Models\AttendanceSession;
 use App\Models\User;
-// use App\Models\LessonSchedule;
-// use App\Models\LessonSchedule;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Database\QueryException;
+// use Illuminate\Database\QueryException;
 
 
 
@@ -26,55 +24,59 @@ class AttendanceService
     {
         return DB::transaction(function () use ($user) {
 
-            //current schedule
-            $schedule = $this->scheduleService->getCurrentLesson();
+            $session = AttendanceSession::where('date', now()->toDateString())
+                ->where('status', 'open')
+                ->whereHas('schedule', function ($q) use ($user) {
+                    $q->where('class_id', $user->class_id);
+                })
+                ->first();
 
-            if (!$schedule) {
+            if (!$session) {
+
                 return [
                     'success' => false,
-                    'status' => 'no_schedule',
-                    'message' => 'Tidak ada jadwal aktif',
+                    'status' => 'no_session',
+                    'message' => 'Absensi belum dimulai oleh guru',
                 ];
             }
 
+            $schedule = $session->schedule;
+
             $now = now();
-            //determine status
-            $status = $this->determineStatus($schedule, $now);
 
-            try {
-                //insert
-                $attendance = Attendance::create([
-                    'user_id' => $user->id,
-                    'lesson_schedule_id' => $schedule->id,
-                    'date' => $now->toDateString(),
-                    'check_in_time' => $now->format('H:i:s'),
-                    'status' => $status,
-                ]);
-            } catch (QueryException $e) {
-                // HANDLE DUPLICATE (UNIQUE CONSTRAINT)
-                if ($e->getCode() == 23000) {
+            $status = $this->determineStatus($session, $now);
 
-                    Log::warning('DOUBLE ATTEND ATTEMPT', [
-                        'user_id' => $user->id,
-                        'schedule_id' => $schedule->id,
-                        'date' => $now->toDateString(),
-                    ]);
+            $alreadyAttendance = Attendance::where(
+                'user_id',
+                $user->id
+            )
+                ->where(
+                    'lesson_schedule_id',
+                    $schedule->id
+                )
+                ->whereDate(
+                    'date',
+                    $now->toDateString()
+                )
+                ->exists();
 
-                    return [
-                        'success' => false,
-                        'status' => 'already_attended',
-                        'message' => 'Anda sudah absen pada jadwal ini',
-                    ];
-                }
+            if ($alreadyAttendance) {
 
-                // error lain
-                throw $e;
+                return [
+                    'success' => false,
+                    'status' => 'already_attended',
+                    'message' => 'Anda sudah absen pada sesi ini',
+                ];
             }
 
-            Log::info('ATTENDANCE SUCCESS', [
+            $attendance = Attendance::create([
                 'user_id' => $user->id,
-                'schedule_id' => $schedule->id,
+                'attendance_session_id' => $session->id,
+                'lesson_schedule_id' => $schedule->id,
+                'date' => $now->toDateString(),
+                'check_in_time' => $now->format('H:i:s'),
                 'status' => $status,
+                'method' => 'face',
             ]);
 
             return [
@@ -86,23 +88,19 @@ class AttendanceService
         });
     }
 
-    // public function canAttend(User $user, LessonSchedule $schedule): bool
-    // {
-    //     return ! Attendance::where('user_id', $user->id)
-    //         ->where('lesson_schedule_id', $schedule->id)
-    //         ->whereDate('created_at', today())
-    //         ->exists();
-    // }
-
-    private function determineStatus($schedule, $now): string
+    private function determineStatus($session, $now): string
     {
-        $start = Carbon::today()->setTimeFromTimeString($schedule->start_time);
+        $start = Carbon::parse($session->start_time);
 
-        $toleranceLimit = $start->copy()
-            ->addMinutes($schedule->tolerance_minutes)
-            ->addSeconds(10); // buffer anti delay network
+        // toleransi 1 jam
+        $limit = $start->copy()
+            // ->addHour()
+            ->addMinutes(5)
+            ->addSeconds(10);
 
-        return $now->lte($toleranceLimit) ? 'hadir' : 'terlambat';
+        return $now->lte($limit)
+            ? 'hadir'
+            : 'alfa';
     }
 
     public function getTodayAttendance($userId, $scheduleId)

@@ -18,7 +18,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/attendance/check-in', [AttendanceController::class, 'checkIn']);
     Route::post('/face/verify', [FaceController::class, 'verify']);
     Route::post('/attendance/attend', [AttendanceController::class, 'attend']);
-    Route::get('/attendance/current', [AttendanceController::class, 'current']);
+    Route::get('/attendance/current', [AttendanceController::class, 'getCurrentLessonWithStatus']);
     Route::get('/attendance/next', [AttendanceController::class, 'next']);
     Route::get('/attendance/today', [AttendanceController::class, 'todayStatus']);
 

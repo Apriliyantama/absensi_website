@@ -8,8 +8,9 @@ use App\Models\AttendanceSetting;
 use App\Models\Attendance;
 use App\Services\FaceService;
 use App\Services\AttendanceService;
-use App\Services\LessonScheduleService;
+use App\Models\LessonSchedule;
 use App\Services\LocationService;
+use App\Models\AttendanceSession;
 
 class AttendanceController extends Controller
 {
@@ -58,13 +59,30 @@ class AttendanceController extends Controller
             $setting->longitude
         );
 
-        if ($distance > $setting->radius_meter) {
-            return response()->json([
-                'status' => 'outside_area',
-                'message' => 'Anda berada di luar area absensi',
-                'distance' => round($distance, 2)
-            ], 403);
+        $session = AttendanceSession::where('date', now()->toDateString())
+            ->where('status', 'open')
+            ->whereHas('schedule', function ($q) use ($user) {
+                $q->where('class_id', $user->class_id);
+            })
+            ->first();
+
+        if ($session && $session->gps_enabled) {
+            if ($distance > $setting->radius_meter) {
+                return response()->json([
+                    'status' => 'outside_area',
+                    'message' => 'Anda di luar area',
+                    'distance' => round($distance, 2)
+                ], 403);
+            }
         }
+
+        // if ($distance > $setting->radius_meter) {
+        //     return response()->json([
+        //         'status' => 'outside_area',
+        //         'message' => 'Anda berada di luar area absensi',
+        //         'distance' => round($distance, 2)
+        //     ], 403);
+        // }
 
         // ================= FACE VERIFY =================
         $faceResult = $faceService->verifyWithThreshold(
@@ -121,55 +139,208 @@ class AttendanceController extends Controller
         ], 422);
     }
 
-    //jadwal aktif saat ini
-    public function current(LessonScheduleService $service, AttendanceService $attendanceService)
+    //jadwal aktif saat ini 
+    // public function getCurrentLessonWithStatus()
+    // {
+    //     $user = request()->user();
+
+    //     $session = AttendanceSession::with([
+    //         'schedule.subject',
+    //         'schedule.teacher',
+    //         'schedule.class'
+    //     ])
+    //         ->whereDate('date', today())
+    //         ->where('status', 'open')
+    //         ->whereHas('schedule', function ($q) use ($user) {
+    //             $q->where('class_id', $user->class_id);
+    //         })
+    //         ->latest()
+    //         ->first();
+
+    //     if (!$session) {
+
+    //         return response()->json([
+    //             'status' => 'empty',
+    //             'message' => 'Tidak ada jadwal saat ini',
+    //             'data' => null
+    //         ]);
+    //     }
+
+    //     $schedule = $session->schedule;
+
+    //     return response()->json([
+    //         'status' => 'success',
+    //         'message' => 'Jadwal ditemukan',
+    //         'data' => [
+    //             'id' => $schedule->id,
+    //             'subject' => $schedule->subject->name,
+    //             'teacher' => $schedule->teacher->name,
+    //             'class' => $schedule->class->name,
+    //             'grade' => $schedule->class->grade,
+    //             'start_time' => $schedule->start_time,
+    //             'end_time' => $schedule->end_time,
+    //         ]
+    //     ]);
+    // }
+
+    // public function getCurrentLessonWithStatus()
+    // {
+    //     $now = now();
+
+    //     $today = $now->dayOfWeekIso;
+
+    //     $currentTime = $now->format('H:i:s');
+
+    //     $user = request()->user();
+
+    //     // ================= CARI JADWAL SESUAI JAM =================
+    //     $schedule = LessonSchedule::with([
+    //         'subject',
+    //         'teacher',
+    //         'class'
+    //     ])
+    //         ->where('class_id', $user->class_id)
+    //         ->where('day_of_week', $today)
+    //         ->whereTime('start_time', '<=', $currentTime)
+    //         ->whereTime('end_time', '>=', $currentTime)
+    //         ->first();
+
+    //     if (!$schedule) {
+
+    //         return response()->json([
+    //             'status' => 'empty',
+    //             'message' => 'Tidak ada jadwal saat ini',
+    //             'data' => null
+    //         ]);
+    //     }
+
+    //     // ================= CEK SESSION GURU =================
+    //     $session = AttendanceSession::where(
+    //         'lesson_schedule_id',
+    //         $schedule->id
+    //     )
+    //         ->whereDate('date', today())
+    //         ->where('status', 'open')
+    //         ->first();
+
+    //     $closedSession = AttendanceSession::where(
+    //         'lesson_schedule_id',
+    //         $schedule->id
+    //     )
+    //         ->whereDate('date', today())
+    //         ->where('status', 'closed')
+    //         ->exists();
+
+    //     return response()->json([
+    //         'status' => 'success',
+    //         'message' => 'Jadwal ditemukan',
+    //         'data' => [
+    //             'id' => $schedule->id,
+    //             'subject' => $schedule->subject->name,
+    //             'teacher' => $schedule->teacher->name,
+    //             'class' => $schedule->class->name,
+    //             'grade' => $schedule->class->grade,
+    //             'start_time' => $schedule->start_time,
+    //             'end_time' => $schedule->end_time,
+
+    //             'has_schedule' => true,
+    //             // penting
+    //             'session_open' => $session ? true : false,
+    //             'session_closed' => $session ? true : false,
+
+    //             //gps mode
+    //             'gps_enabled' => $session?->gps_enabled ?? false,
+    //         ]
+    //     ]);
+    // }
+
+    public function getCurrentLessonWithStatus()
     {
-        $result = $service->getCurrentLessonWithStatus();
+        $now = now();
 
-        if (!isset($result['data'])) {
-            return response()->json($result);
-        }
+        $today = $now->dayOfWeekIso;
 
-        $schedule = $result['data'];
+        $currentTime = $now->format('H:i:s');
 
         $user = request()->user();
 
-        $attendance = $attendanceService->getTodayAttendance(
-            $user->id,
+        // ================= CARI JADWAL BERDASARKAN JAM =================
+        $schedule = LessonSchedule::with([
+            'subject',
+            'teacher',
+            'class'
+        ])
+            ->where('class_id', $user->class_id)
+            ->where('day_of_week', $today)
+            ->whereTime('start_time', '<=', $currentTime)
+            ->whereTime('end_time', '>=', $currentTime)
+            ->first();
+
+        if (!$schedule) {
+
+            return response()->json([
+                'status' => 'empty',
+                'message' => 'Tidak ada jadwal saat ini',
+                'data' => null
+            ]);
+        }
+
+        // ================= CEK SESSION =================
+        $session = AttendanceSession::where(
+            'lesson_schedule_id',
             $schedule->id
-        );
+        )
+            ->whereDate('date', now()->toDateString())
+            ->latest()
+            ->first();
+
+        // ================= SESSION CLOSED MANUAL =================
+        $sessionClosed =
+            $session &&
+            $session->status === 'closed' &&
+            $session->start_time != null;
+
+        // ================= SESSION OPEN =================
+        $sessionOpen =
+            $session &&
+            $session->status === 'open';
 
         return response()->json([
-            'status' => $result['status'],
-            'message' => $result['message'],
+            'status' => 'success',
+            'message' => 'Jadwal ditemukan',
+
             'data' => [
                 'id' => $schedule->id,
                 'subject' => $schedule->subject->name,
                 'teacher' => $schedule->teacher->name,
                 'class' => $schedule->class->name,
                 'grade' => $schedule->class->grade,
+
                 'start_time' => $schedule->start_time,
                 'end_time' => $schedule->end_time,
 
-                'attendance' => $attendance ? [
-                    'status' => $attendance->status,
-                    'check_in_time' => $attendance->check_in_time,
-                ] : null,
+                'session_open' => $sessionOpen,
+                'session_closed' => $sessionClosed,
+
+                'gps_enabled' => $session?->gps_enabled,
             ]
         ]);
     }
 
     // jadwal berikutnya
-    public function next()
+    public function next(Request $request)
     {
         $now = now();
 
         // sesuaikan dengan DB kamu (1=Senin)
-        $today = $now->dayOfWeek == 0 ? 7 : $now->dayOfWeek;
+        $today = $now->dayOfWeekIso;
 
         $currentTime = $now->format('H:i:s');
 
+        $user = $request->user();
+
         $next = \App\Models\LessonSchedule::where('day_of_week', $today)
+            ->where('class_id', $user->class_id)
             ->where('start_time', '>', $currentTime)
             ->with(['subject'])
             ->orderBy('start_time')

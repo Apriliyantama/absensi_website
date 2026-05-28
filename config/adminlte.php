@@ -371,7 +371,12 @@ return [
             'icon' => 'fas fa-chalkboard-teacher',
             'can' => 'teacher'
         ],
-
+        [
+            'text' => 'Overview Kehadiran',
+            'url' => 'teacher/attendance-overview',
+            'icon' => 'fas fa-history',
+            'can' => 'teacher'
+        ],
         ['header' => 'account_settings'],
         [
             'text' => 'profile',

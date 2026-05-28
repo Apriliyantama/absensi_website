@@ -77,18 +77,8 @@ class LessonScheduleService
 
         $now = now();
 
-        // waktu mulai & selesai
         $start = Carbon::parse($schedule->start_time);
         $end   = Carbon::parse($schedule->end_time);
-
-        // batas toleransi telat
-        $lateLimit = $start->copy()->addMinutes($schedule->tolerance_minutes);
-
-        /*
-    |--------------------------------------------------------------------------
-    | DECISION ENGINE
-    |--------------------------------------------------------------------------
-    */
 
         if ($now->lt($start)) {
             return [
@@ -97,23 +87,16 @@ class LessonScheduleService
             ];
         }
 
-        if ($now->between($start, $lateLimit)) {
+        if ($now->gt($end)) {
             return [
-                'status' => 'present',
-                'message' => 'Hadir tepat waktu'
-            ];
-        }
-
-        if ($now->between($lateLimit, $end)) {
-            return [
-                'status' => 'late',
-                'message' => 'Terlambat'
+                'status' => 'rejected',
+                'message' => 'Jadwal sudah berakhir'
             ];
         }
 
         return [
-            'status' => 'rejected',
-            'message' => 'Jadwal sudah berakhir'
+            'status' => 'active',
+            'message' => 'Jadwal aktif'
         ];
     }
 }

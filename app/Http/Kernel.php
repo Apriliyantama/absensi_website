@@ -28,7 +28,7 @@ class Kernel extends HttpKernel
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         'teacher' => \App\Http\Middleware\TeacherMiddleware::class,
 
-        // ✅ WAJIB UNTUK Sanctum
+        // WAJIB UNTUK Sanctum
         'sanctum' => \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
     ];
 }

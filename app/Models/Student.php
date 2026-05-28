@@ -14,6 +14,8 @@ class Student extends Model
         'gender',
         'birth_date',
         'address',
+        'class_id',
+        'requested_class_id',
     ];
 
     public function user()

@@ -19,10 +19,14 @@ return new class extends Migration
                 ->constrained()
                 ->cascadeOnDelete();
 
+            $table->foreignId('attendance_session_id')
+                ->constrained()
+                ->cascadeOnDelete();
+
             $table->date('date');
             $table->time('check_in_time')->nullable();
 
-            $table->enum('status', ['hadir', 'terlambat', 'izin', 'sakit', 'alpa'])->default('hadir');
+            $table->enum('status', ['hadir', 'terlambat', 'izin', 'sakit', 'alfa'])->default('hadir');
             $table->double('latitude')->nullable();
             $table->double('longitude')->nullable();
             $table->double('distance')->nullable();

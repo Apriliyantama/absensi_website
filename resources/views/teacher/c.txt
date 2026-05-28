@@ -1,0 +1,151 @@
+<div class="row">
+    
+    <!-- LEFT -->
+    <div class="col-md-4">
+        <h4 class="mb-3">Jadwal Hari Ini</h4>
+        
+        @foreach ($schedules as $schedule)
+            <div class="card mb-3 shadow-sm border-0 rounded-lg">
+                <div class="card-body">
+                    <h5 class="font-weight-bold">
+                        {{ $schedule->subject->name }}
+                    </h5>
+                    <p class="mb-1 text-muted">
+                        {{ $schedule->class->grade }}
+                        {{ $schedule->class->name }}
+                    </p>
+                    <p class="font-weight-bold">
+                        {{ $schedule->start_time }}
+                        -
+                        {{ $schedule->end_time }}
+                    </p>
+                    <div class="form-group">
+                        <label class="font-weight-bold">
+                            Mode Absensi:
+                        </label>
+                        <select class="form-control gps-mode">
+                            <option value="1">
+                                GPS ON (Sekolah)
+                            </option>
+                            <option value="0">
+                                GPS OFF (Online)
+                            </option>
+                        </select>
+                    </div>
+                    @if (!$schedule->is_started)
+                        <button class="btn btn-secondary w-100" disabled>
+                            Belum Waktunya
+                        </button>
+                    @elseif ($schedule->active_session)
+                        <span class="badge badge-success mb-2">
+                            Absensi Sedang Berjalan
+                        </span>
+                        <button class="btn btn-warning w-100 btn-end-attendance"
+                            data-id="{{ $schedule->active_session->id }}">
+                            Tutup Absensi
+                        </button>
+                    @elseif($schedule->closed_session)
+                        <span class="badge badge-dark mb-2">
+                            Sesi Selesai
+                        </span>
+                        <button class="btn btn-dark w-100" disabled>
+                            Absensi Ditutup
+                        </button>
+                    @else
+                        <button class="btn btn-success w-100 btn-start-attendance"
+                            data-id="{{ $schedule->id }}">
+                            Mulai Absensi
+                        </button>
+                    @endif
+                </div>
+            </div>
+        @endforeach
+    </div>
+
+    <!-- RIGHT -->
+    <div class="col-md-8">
+        
+        @php
+            $activeSchedule = $schedules->firstWhere('active_session');
+        @endphp
+        
+        @if ($activeSchedule)
+            <div class="card shadow-sm border-0 rounded-lg">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <div>
+                            <h3 class="font-weight-bold">
+                                Jadwal Berlangsung
+                            </h3>
+                            <h4>
+                                {{ $activeSchedule->subject->name }}
+                            </h4>
+                            <p>
+                                {{ $activeSchedule->start_time }}
+                                -
+                                {{ $activeSchedule->end_time }}
+                            </p>
+                        </div>
+                        <div class="text-right">
+                            <h3>
+                                {{ $activeSchedule->class->grade }}
+                                {{ $activeSchedule->class->name }}
+                            </h3>
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-bordered text-center">
+                            <thead>
+                                <tr>
+                                    <th width="60">No</th>
+                                    <th class="text-left">Nama</th>
+                                    <th width="70">H</th>
+                                    <th width="70">T</th>
+                                    <th width="70">I</th>
+                                    <th width="70">S</th>
+                                    <th width="70">A</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach ($activeSchedule->students as $student)
+                                    @php
+                                        $status =
+                                            $student->attendance->status ?? null;
+                                    @endphp
+                                    <tr>
+                                        <td>
+                                            {{ $loop->iteration }}
+                                        </td>
+                                        <td class="text-left">
+                                            {{ $student->user->name }}
+                                        </td>
+                                        @foreach (['hadir', 'terlambat', 'izin', 'sakit', 'alfa'] as $item)
+                                            <td>
+                                                <input
+                                                    type="radio"
+                                                    class="attendance-radio"
+                                                    name="attendance_{{ $activeSchedule->id }}_{{ $student->id }}"
+                                                    value="{{ $item }}"
+                                                    data-user="{{ $student->user_id }}"
+                                                    data-schedule="{{ $activeSchedule->id }}"
+                                                    {{ $status === $item ? 'checked' : '' }}>
+                                            </td>
+                                        @endforeach
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        @else
+            <div class="card shadow-sm border-0">
+                <div class="card-body text-center py-5">
+                    <h4>
+                        Tidak ada sesi aktif saat ini
+                    </h4>
+                </div>
+            </div>
+        @endif
+    </div>
+</div>

@@ -16,7 +16,6 @@ class LessonSchedule extends Model
         'day_of_week',
         'start_time',
         'end_time',
-        'tolerance_minutes',
     ];
 
     //guru
