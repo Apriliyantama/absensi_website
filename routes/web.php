@@ -8,6 +8,7 @@ use App\Http\Controllers\Admin\ClassController;
 use App\Http\Controllers\Admin\SubjectController;
 use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\Admin\AttendanceSettingController;
+use App\Http\Controllers\Admin\StudentController;
 use App\Http\Controllers\Teacher\TeacherDashboardController;
 use App\Http\Controllers\Teacher\AttendanceOverviewController;
 use App\Http\Controllers\Teacher\AttendanceSessionController;
@@ -82,6 +83,14 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
         Route::post('/approve/{id}', [StudentApprovalController::class, 'approve'])->name('approve');
         Route::post('/reject/{id}', [StudentApprovalController::class, 'reject'])->name('reject');
+    });
+    // Student Master Data
+    Route::prefix('students')->name('students.')->group(function () {
+        Route::get('/', [StudentController::class, 'index'])
+            ->name('index');
+
+        Route::get('/data', [StudentController::class, 'data'])
+            ->name('data');
     });
 
     // Student Class

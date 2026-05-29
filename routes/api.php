@@ -5,9 +5,11 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AttendanceController;
 use App\Http\Controllers\Api\FaceController;
+use App\Http\Controllers\Api\ClassController;
 
 Route::post('/login', [AuthController::class, 'login']);
 Route::post('/register', [AuthController::class, 'register']);
+Route::get('/classes', [ClassController::class, 'index']);
 
 Route::get('/attendance/settings', function () {
     return \App\Models\AttendanceSetting::first();

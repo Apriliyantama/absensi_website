@@ -340,6 +340,12 @@ return [
             'can' => 'admin'
         ],
         [
+            'text' => 'Data Murid',
+            'url' => 'admin/students',
+            'icon' => 'fas fa-user-check',
+            'can' => 'admin'
+        ],
+        [
             'text' => 'Kelas',
             'url' => 'admin/classes',
             'icon' => 'fas fa-school',
