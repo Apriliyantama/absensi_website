@@ -328,11 +328,12 @@ return [
             'can' => 'admin'
         ],
         [
-            'text' => 'Teacher',
+            'text' => 'Guru Pengajar',
             'url' => 'admin/teachers',
             'icon' => 'fas fa-user-tie',
             'can' => 'admin'
         ],
+        ['header' => 'Menu Murid'],
         [
             'text' => 'Validasi Murid',
             'url' => 'admin/students/approval',
@@ -342,9 +343,10 @@ return [
         [
             'text' => 'Data Murid',
             'url' => 'admin/students',
-            'icon' => 'fas fa-user-check',
+            'icon' => 'fas fa-user',
             'can' => 'admin'
         ],
+        ['header' => 'Kelas & Mapel'],
         [
             'text' => 'Kelas',
             'url' => 'admin/classes',
@@ -363,8 +365,9 @@ return [
             'icon' => 'fas fa-clock',
             'can' => 'admin'
         ],
+        ['header' => 'Konfigurasi'],
         [
-            'text' => 'Setting GPS',
+            'text' => 'Metadata',
             'url' => 'admin/attendance-setting',
             'icon' => 'fas fa-map-marker-alt',
             'can' => 'admin'
@@ -383,56 +386,49 @@ return [
             'icon' => 'fas fa-history',
             'can' => 'teacher'
         ],
-        ['header' => 'account_settings'],
-        [
-            'text' => 'profile',
-            'url' => 'admin/settings',
-            'icon' => 'fas fa-fw fa-user',
-        ],
         // [
         //     'text' => 'change_password',
         //     'url' => 'admin/settings',
         //     'icon' => 'fas fa-fw fa-lock',
         // ],
-        [
-            'text' => 'multilevel',
-            'icon' => 'fas fa-fw fa-share',
-            'submenu' => [
-                [
-                    'text' => 'level_one',
-                    'url' => '#',
-                ],
-                [
-                    'text' => 'level_one',
-                    'url' => '#',
-                    'submenu' => [
-                        [
-                            'text' => 'level_two',
-                            'url' => '#',
-                        ],
-                        [
-                            'text' => 'level_two',
-                            'url' => '#',
-                            'submenu' => [
-                                [
-                                    'text' => 'level_three',
-                                    'url' => '#',
-                                ],
-                                [
-                                    'text' => 'level_three',
-                                    'url' => '#',
-                                ],
-                            ],
-                        ],
-                    ],
-                ],
-                [
-                    'text' => 'level_one',
-                    'url' => '#',
-                ],
-            ],
-        ],
-        ['header' => 'labels'],
+        // [
+        //     'text' => 'multilevel',
+        //     'icon' => 'fas fa-fw fa-share',
+        //     'submenu' => [
+        //         [
+        //             'text' => 'level_one',
+        //             'url' => '#',
+        //         ],
+        //         [
+        //             'text' => 'level_one',
+        //             'url' => '#',
+        //             'submenu' => [
+        //                 [
+        //                     'text' => 'level_two',
+        //                     'url' => '#',
+        //                 ],
+        //                 [
+        //                     'text' => 'level_two',
+        //                     'url' => '#',
+        //                     'submenu' => [
+        //                         [
+        //                             'text' => 'level_three',
+        //                             'url' => '#',
+        //                         ],
+        //                         [
+        //                             'text' => 'level_three',
+        //                             'url' => '#',
+        //                         ],
+        //                     ],
+        //                 ],
+        //             ],
+        //         ],
+        //         [
+        //             'text' => 'level_one',
+        //             'url' => '#',
+        //         ],
+        //     ],
+        // ],
         // [
         //     'text' => 'important',
         //     'icon_color' => 'red',
@@ -443,11 +439,6 @@ return [
         //     'icon_color' => 'yellow',
         //     'url' => '#',
         // ],
-        [
-            'text' => 'information',
-            'icon_color' => 'cyan',
-            'url' => '#',
-        ],
     ],
 
     /*

@@ -43,37 +43,6 @@ class AuthController extends Controller
     }
 
     //register akun murid
-    // public function register(Request $request)
-    // {
-    //     $request->validate([
-    //         'name' => 'required',
-    //         'email' => 'required|email|unique:users,email',
-    //         'password' => 'required|min:6',
-    //         'nis' => 'required|unique:students,nis',
-    //         'class_id' => 'required|exists:classes,id',
-    //     ]);
-
-    //     // simpan user
-    //     $user = User::create([
-    //         'name' => $request->name,
-    //         'email' => $request->email,
-    //         'password' => Hash::make($request->password),
-    //         'role' => 'student',
-    //         'status' => 'pending'
-    //     ]);
-
-    //     // simpan student
-    //     Student::create([
-    //         'user_id' => $user->id,
-    //         'name' => $request->name,
-    //         'nis' => $request->nis,
-    //         'requested_class_id' => $request->class_id
-    //     ]);
-
-    //     return response()->json([
-    //         'message' => 'Register berhasil, tunggu approval admin'
-    //     ], 200);
-    // }
     public function register(Request $request)
     {
         $request->validate([
@@ -81,6 +50,9 @@ class AuthController extends Controller
             'email' => 'required|email|unique:users,email',
             'password' => 'required|min:6',
             'nis' => 'required|unique:students,nis',
+            'gender' => 'required',
+            'birth_date' => 'required|date',
+            'address' => 'required',
             'class_id' => 'required|exists:classes,id',
         ]);
 
@@ -99,6 +71,11 @@ class AuthController extends Controller
             'user_id' => $user->id,
             'name' => $request->name,
             'nis' => $request->nis,
+
+            'gender' => $request->gender,
+            'birth_date' => $request->birth_date,
+            'address' => $request->address,
+
             'requested_class_id' => $request->class_id,
         ]);
 

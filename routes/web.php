@@ -86,11 +86,13 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     });
     // Student Master Data
     Route::prefix('students')->name('students.')->group(function () {
-        Route::get('/', [StudentController::class, 'index'])
-            ->name('index');
-
-        Route::get('/data', [StudentController::class, 'data'])
-            ->name('data');
+        Route::get('/', [StudentController::class, 'index'])->name('index');
+        Route::get('/data', [StudentController::class, 'data'])->name('data');
+        Route::get('/show/{id}',[StudentController::class, 'show'])->name('show');
+        Route::get('/edit/{id}',[StudentController::class, 'edit'])->name('edit');
+        Route::post('/update/{id}',[StudentController::class, 'update'])->name('update');
+        Route::delete('/delete/{id}',[StudentController::class, 'destroy'])->name('destroy');
+        Route::post('/promote', [StudentController::class, 'promote'])->name('promote');
     });
 
     // Student Class
