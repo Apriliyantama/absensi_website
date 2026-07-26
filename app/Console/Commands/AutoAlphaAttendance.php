@@ -10,10 +10,8 @@ use App\Models\Student;
 class AutoAlphaAttendance extends Command
 {
     protected $signature = 'attendance:auto-alpha';
-
     protected $description =
     'Auto set alfa untuk siswa yang belum absen';
-
     public function handle()
     {
         $now = now()->format('H:i:s');
@@ -24,9 +22,7 @@ class AutoAlphaAttendance extends Command
             ->get();
 
         foreach ($sessions as $session) {
-
             $schedule = $session->schedule;
-
             if (!$schedule) {
                 continue;
             }
@@ -38,7 +34,6 @@ class AutoAlphaAttendance extends Command
             )->get();
 
             foreach ($students as $student) {
-
                 $exists = Attendance::where(
                     'attendance_session_id',
                     $session->id
@@ -46,9 +41,8 @@ class AutoAlphaAttendance extends Command
                     ->where('user_id', $student->user_id)
                     ->exists();
 
-                // jika belum attendance → auto alfa
+                // command auto alfa jika belum absen 
                 if (!$exists) {
-
                     Attendance::firstOrCreate([
                         'attendance_session_id' => $session->id,
                         'lesson_schedule_id' => $schedule->id,

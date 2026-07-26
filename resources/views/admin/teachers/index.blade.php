@@ -33,7 +33,6 @@
                 <form id="form">
                     <div class="modal-header">
                         <h5 class="modal-title" id="modalTitle">Form Guru</h5>
-
                         <button type="button" class="close" data-dismiss="modal">
                             <span>&times;</span>
                         </button>
@@ -102,6 +101,7 @@
 
         let save_method;
 
+        // tambah
         $('#add').click(function() {
             save_method = 'add';
             $('#form')[0].reset();
@@ -134,36 +134,68 @@
                 "{{ route('admin.teachers.store') }}" :
                 "/admin/teachers/update/" + id;
 
-            $.post(url, {
-                _token: "{{ csrf_token() }}",
-                name: $('#name').val(),
-                nip: $('#nip').val(),
-                email: $('#email').val()
-            }, function(res) {
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: {
+                    _token: "{{ csrf_token() }}",
+                    name: $('#name').val(),
+                    nip: $('#nip').val(),
+                    email: $('#email').val()
+                },
 
-                $('#modalForm').modal('hide');
-                $('#table').DataTable().ajax.reload();
+                success: function(res) {
 
-                //kondisi add vs edit
-                if (save_method == 'add') {
+                    $('#modalForm').modal('hide');
+                    $('#table').DataTable().ajax.reload();
 
-                    Swal.fire({
-                        title: 'Akun Guru Dibuat',
-                        html: `
-                            Email: ${$('#email').val()}<br>
-                            Password: <b>${res.password}</b>
-                        `,
-                        icon: 'success'
-                    });
+                    if (save_method == 'add') {
 
-                } else {
-                    swal.fire({
-                        icon: 'success',
-                        title: 'Berhasil!',
-                        text: 'Data Guru berhasil diupdate',
-                        timer: 2000,
-                        showConfirmButton: false
-                    });
+                        Swal.fire({
+                            title: 'Akun Guru Dibuat',
+                            html: `
+                        Email: ${$('#email').val()}<br>
+                        Password: <b>${res.password}</b>
+                    `,
+                            icon: 'success'
+                        });
+
+                    } else {
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil!',
+                            text: 'Data Guru berhasil diupdate',
+                            timer: 2000,
+                            showConfirmButton: false
+                        });
+
+                    }
+                },
+
+                error: function(xhr) {
+
+                    if (xhr.status === 422) {
+                        let errors = xhr.responseJSON.errors;
+                        let pesan = '';
+                        $.each(errors, function(key, value) {
+                            pesan += value[0] + '<br>';
+                        });
+
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Data Tidak Valid',
+                            html: pesan
+                        });
+                    } else {
+
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Gagal',
+                            text: 'Terjadi kesalahan pada server'
+                        });
+
+                    }
                 }
             });
         });

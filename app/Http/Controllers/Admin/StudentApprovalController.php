@@ -25,7 +25,6 @@ class StudentApprovalController extends Controller
 
         return DataTables::of($query)
             ->addIndexColumn()
-
             ->addColumn('nis', function ($row) {
                 return $row->student->nis ?? '-';
             })
@@ -47,9 +46,7 @@ class StudentApprovalController extends Controller
             })
 
             ->addColumn('class_dropdown', function ($row) use ($classes) {
-
                 $html = '<select class="form-control class-select" data-id="' . $row->id . '">';
-
                 foreach ($classes as $class) {
                     $selected = ($row->student->requested_class_id == $class->id) ? 'selected' : '';
                     $html .= '<option value="' . $class->id . '" ' . $selected . '>'
@@ -58,7 +55,6 @@ class StudentApprovalController extends Controller
                 }
 
                 $html .= '</select>';
-
                 return $html;
             })
 

@@ -37,11 +37,12 @@ class AttendanceController extends Controller
             'latitude' => 'required|numeric',
             'longitude' => 'required|numeric',
             'embedding' => 'required|array|size:512',
+            'raw_captures' => 'nullable|array',
         ]);
 
         $user = $request->user();
 
-        // ================= SETTING =================
+        // SETTING
         $setting = AttendanceSetting::first();
 
         if (!$setting) {
@@ -51,7 +52,7 @@ class AttendanceController extends Controller
             ], 422);
         }
 
-        // ================= LOKASI =================
+        // LOKASI
         $distance = $locationService->calculateDistance(
             $validated['latitude'],
             $validated['longitude'],
@@ -59,10 +60,11 @@ class AttendanceController extends Controller
             $setting->longitude
         );
 
+        $classId = $user->student->class_id;
         $session = AttendanceSession::where('date', now()->toDateString())
             ->where('status', 'open')
-            ->whereHas('schedule', function ($q) use ($user) {
-                $q->where('class_id', $user->class_id);
+            ->whereHas('schedule', function ($q) use ($classId) {
+                $q->where('class_id', $classId);
             })
             ->first();
 
@@ -76,20 +78,13 @@ class AttendanceController extends Controller
             }
         }
 
-        // if ($distance > $setting->radius_meter) {
-        //     return response()->json([
-        //         'status' => 'outside_area',
-        //         'message' => 'Anda berada di luar area absensi',
-        //         'distance' => round($distance, 2)
-        //     ], 403);
-        // }
-
-        // ================= FACE VERIFY =================
+        // FACE VERIFY
         $faceResult = $faceService->verifyWithThreshold(
             $user->id,
             $validated['embedding'],
             $setting->face_threshold ?? 0.78,
-            $setting->face_required_pass ?? 3
+            $setting->face_required_pass ?? 3,
+            $request->input('raw_captures')
         );
 
         if ($faceResult['reason'] ?? null === 'no_face_data') {
@@ -108,7 +103,7 @@ class AttendanceController extends Controller
             ], 403);
         }
 
-        // ================= ATTEND =================
+        // ATTEND
         $result = $attendanceService->attend($user);
 
         if ($result['success']) {
@@ -150,13 +145,13 @@ class AttendanceController extends Controller
 
         $user = request()->user();
 
-        // ================= CARI JADWAL BERDASARKAN JAM =================
+        // CARI JADWAL BERDASARKAN JAM
         $schedule = LessonSchedule::with([
             'subject',
             'teacher',
             'class'
         ])
-            ->where('class_id', $user->class_id)
+            ->where('class_id', $user->student->class_id)
             ->where('day_of_week', $today)
             ->whereTime('start_time', '<=', $currentTime)
             ->whereTime('end_time', '>=', $currentTime)
@@ -171,7 +166,7 @@ class AttendanceController extends Controller
             ]);
         }
 
-        // ================= CEK SESSION =================
+        // CEK SESSION
         $session = AttendanceSession::where(
             'lesson_schedule_id',
             $schedule->id
@@ -180,13 +175,13 @@ class AttendanceController extends Controller
             ->latest()
             ->first();
 
-        // ================= SESSION CLOSED MANUAL =================
+        // SESSION CLOSED MANUAL
         $sessionClosed =
             $session &&
             $session->status === 'closed' &&
             $session->start_time != null;
 
-        // ================= SESSION OPEN =================
+        // SESSION OPEN
         $sessionOpen =
             $session &&
             $session->status === 'open';
@@ -218,7 +213,7 @@ class AttendanceController extends Controller
     {
         $now = now();
 
-        // sesuaikan dengan DB kamu (1=Senin)
+        // sesuaikan dengan DB
         $today = $now->dayOfWeekIso;
 
         $currentTime = $now->format('H:i:s');
@@ -226,7 +221,7 @@ class AttendanceController extends Controller
         $user = $request->user();
 
         $next = \App\Models\LessonSchedule::where('day_of_week', $today)
-            ->where('class_id', $user->class_id)
+            ->where('class_id', $user->student->class_id)
             ->where('start_time', '>', $currentTime)
             ->with(['subject'])
             ->orderBy('start_time')

@@ -27,7 +27,7 @@ class StudentSeeder extends Seeder
             'user_id' => $user1->id,
             'name' => 'Ibnu',
             'nis' => '1000',
-            'class_id' => $class->id, // 🔥 relasi penting
+            'class_id' => $class->id, // relasi
         ]);
 
         // user 2

@@ -31,7 +31,6 @@ class AutoCompleteAbsentTeacher extends Command
 
         foreach ($schedules as $schedule) {
             $this->info("CHECK SCHEDULE {$schedule->id}");
-
             $endTime = \Carbon\Carbon::parse(
                 today()->toDateString() . ' ' .
                     $schedule->end_time
@@ -49,9 +48,6 @@ class AutoCompleteAbsentTeacher extends Command
             )
                 ->whereDate('date', today())
                 ->first();
-
-            // kalau session SUDAH ADA
-            // berarti guru pernah start/manual stop
             if ($session) {
                 continue;
             }
@@ -64,7 +60,7 @@ class AutoCompleteAbsentTeacher extends Command
                 continue;
             }
 
-            // AUTO CREATE CLOSED SESSION
+            // auto create closed session
             $session = AttendanceSession::create([
                 'teacher_id' => $teacher->user_id,
                 'lesson_schedule_id' => $schedule->id,
@@ -75,7 +71,7 @@ class AutoCompleteAbsentTeacher extends Command
                 'status' => 'closed',
             ]);
 
-            // seluruh siswa auto hadir
+            // command seluruh siswa auto hadir
             $students = Student::where(
                 'class_id',
                 $schedule->class_id

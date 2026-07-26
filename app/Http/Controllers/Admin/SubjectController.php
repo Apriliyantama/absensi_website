@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Subject;
 use Illuminate\Http\Request;
 use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Validation\Rule;
 
 class SubjectController extends Controller
 {
@@ -33,7 +34,10 @@ class SubjectController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required'
+            'name' => 'required|unique:subjects,name'
+        ], [
+            'name.required' => 'Nama mata pelajaran wajib diisi.',
+            'name.unique' => 'Mata pelajaran sudah ada.'
         ]);
 
         Subject::create([
@@ -50,11 +54,18 @@ class SubjectController extends Controller
 
     public function update(Request $request, $id)
     {
+        $subject = Subject::findOrFail($id);
         $request->validate([
-            'name' => 'required'
+            'name' => [
+                'required',
+                Rule::unique('subjects', 'name')->ignore($subject->id)
+            ]
+        ], [
+            'name.required' => 'Nama mata pelajaran wajib diisi.',
+            'name.unique' => 'Mata pelajaran sudah ada.'
         ]);
 
-        Subject::findOrFail($id)->update([
+        $subject->update([
             'name' => $request->name
         ]);
 
@@ -64,7 +75,6 @@ class SubjectController extends Controller
     public function destroy($id)
     {
         Subject::findOrFail($id)->delete();
-
         return response()->json(['success' => true]);
     }
 }

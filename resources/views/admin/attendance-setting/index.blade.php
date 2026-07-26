@@ -113,7 +113,7 @@
                 Swal.fire('Berhasil', res.message, 'success');
 
                 setTimeout(() => {
-                    location.reload(); // reload biar update tampil
+                    location.reload(); // reload update tampil
                 }, 800);
 
             });

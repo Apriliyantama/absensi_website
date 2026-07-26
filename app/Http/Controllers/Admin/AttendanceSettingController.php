@@ -10,7 +10,7 @@ class AttendanceSettingController extends Controller
 {
     public function index()
     {
-        // ambil 1 data saja
+        // ambil 1 data
         $setting = AttendanceSetting::first();
 
         return view('admin.attendance-setting.index', compact('setting'));

@@ -11,7 +11,7 @@ class LessonScheduleService
     {
         $now = Carbon::now();
 
-        $day = $now->dayOfWeekIso; // 1-7 (ISO STANDARD)
+        $day = $now->dayOfWeekIso; // 1-7
         $time = $now->format('H:i:s');
 
         return LessonSchedule::with(['teacher', 'class', 'subject'])

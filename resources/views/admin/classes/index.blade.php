@@ -74,7 +74,8 @@
                         searchable: false
                     },
                     {
-                        data: 'full_name'
+                        data: 'full_name',
+                        name: 'full_name'
                     },
                     {
                         data: 'action',
@@ -100,21 +101,50 @@
 
             let id = $('#id').val();
 
-            let url = id ? '/admin/classes/update/' + id :
+            let url = id ?
+                '/admin/classes/update/' + id :
                 '/admin/classes/store';
 
-            $.post(url, {
-                _token: '{{ csrf_token() }}',
-                grade: $('#grade').val(),
-                name: $('#name').val()
-            }, function() {
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    grade: $('#grade').val(),
+                    name: $('#name').val()
+                },
 
-                $('#modal').modal('hide');
-                $('#table').DataTable().ajax.reload();
+                success: function() {
 
-                Swal.fire('Berhasil!', '', 'success');
+                    $('#modal').modal('hide');
+                    $('#table').DataTable().ajax.reload();
+
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Berhasil!',
+                        text: 'Data kelas berhasil disimpan'
+                    });
+                },
+
+                error: function(xhr) {
+
+                    if (xhr.status === 422) {
+
+                        let errors = xhr.responseJSON.errors;
+                        let pesan = '';
+
+                        $.each(errors, function(key, value) {
+                            pesan += value[0] + '<br>';
+                        });
+
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Data Tidak Valid',
+                            html: pesan
+                        });
+                    }
+                }
             });
-
         });
 
         //EDIT
@@ -152,7 +182,6 @@
                             $('#table').DataTable().ajax.reload();
                         }
                     });
-
                 }
             });
         });

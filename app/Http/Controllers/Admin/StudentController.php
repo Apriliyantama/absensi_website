@@ -58,12 +58,25 @@ class StudentController extends Controller
                 return $row->user->email ?? '-';
             })
 
+            ->orderColumn('email', function ($query, $order) {
+                $query->leftJoin('users', 'users.id', '=', 'students.user_id')
+                    ->select('students.*')
+                    ->orderBy('users.email', $order);
+            })
+
             ->addColumn('class_name', function ($row) {
                 if (!$row->classRelation) {
                     return '-';
                 }
                 return $row->classRelation->grade . ' ' .
                     $row->classRelation->name;
+            })
+
+            ->orderColumn('class_name', function ($query, $order) {
+                $query->leftJoin('classes', 'classes.id', '=', 'students.class_id')
+                    ->select('students.*')
+                    ->orderBy('classes.grade', $order)
+                    ->orderBy('classes.name', $order);
             })
 
             ->addColumn('status_badge', function ($row) {
@@ -138,7 +151,7 @@ class StudentController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Data murid berhasil diperbarui'
+            'message' => 'Data siswa berhasil diperbarui'
         ]);
     }
 

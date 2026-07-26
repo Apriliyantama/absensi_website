@@ -17,12 +17,18 @@ class FaceController extends Controller
         $this->faceService = $faceService;
     }
 
-    // ================= REGISTER =================
+    // REGISTER
     public function register(Request $request)
     {
+        Log::info('REGISTER ENDPOINT HIT');
+
         $validated = $request->validate([
             'embedding' => 'required|array|size:512',
             'is_first_capture' => 'required|boolean',
+        ]);
+
+        Log::info('REGISTER DATA', [
+            'is_first_capture' => $validated['is_first_capture']
         ]);
 
         $user = $request->user();
@@ -51,13 +57,14 @@ class FaceController extends Controller
         ]);
     }
 
-    // ================= VERIFY =================
+    // VERIFY
     public function verify(Request $request)
     {
         $mode = config('app.attendance_mode');
 
         $validated = $request->validate([
             'embedding' => 'required|array|size:512',
+            'raw_captures' => 'nullable|array'
         ]);
 
         $user = $request->user();
@@ -81,7 +88,7 @@ class FaceController extends Controller
             ], 401);
         }
 
-        // ================= AMBIL SETTING =================
+        // AMBIL SETTING
         if ($mode === 'production') {
             $setting = \App\Models\AttendanceSetting::first();
 
@@ -92,16 +99,17 @@ class FaceController extends Controller
             $requiredPass = 1;
         }
 
-        // ================= PANGGIL SERVICE =================
+        // PANGGIL SERVICE
         $result = $this->faceService->verifyEmbedding(
             $user->id,
-            $validated['embedding']
+            $validated['embedding'],
+            $request->input('raw_captures')
         );
 
         $scores = $result['scores'];
         $bestScore = $result['best_score'];
 
-        // ================= HITUNG PASS =================
+        // HITUNG PASS
         $passCount = 0;
 
         foreach ($scores as $s) {
@@ -112,7 +120,7 @@ class FaceController extends Controller
 
         $match = $passCount >= $requiredPass;
 
-        // ================= LOG =================
+        // LOG
         Log::info('FACE VERIFY DETAIL', [
             'user_id' => $user->id,
             'scores' => $scores,

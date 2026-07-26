@@ -9,7 +9,7 @@ class TeacherMiddleware
 {
     public function handle(Request $request, Closure $next)
     {
-        $user = $request->user(); // ini sekarang valid
+        $user = $request->user();
         // dd($user->role, $user->status);
 
         if (!$user || $user->role !== 'teacher') {

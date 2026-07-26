@@ -10,7 +10,7 @@ use App\Models\Student;
 
 class AuthController extends Controller
 {
-    //login akun murid
+    // login akun murid
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -42,7 +42,7 @@ class AuthController extends Controller
         ], 200);
     }
 
-    //register akun murid
+    // register akun murid
     public function register(Request $request)
     {
         $request->validate([

@@ -3,12 +3,12 @@
 namespace App\Services;
 
 use App\Models\FaceEmbedding;
-// use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Log;
 
 
 class FaceService
 {
-    public function verifyEmbedding(int $userId, array $incoming): array
+    public function verifyEmbedding(int $userId, array $incoming, ?array $rawCaptures = null): array
     {
         $storedEmbeddings = FaceEmbedding::where('user_id', $userId)->get();
 
@@ -24,14 +24,23 @@ class FaceService
         // normalize incoming
         $incoming = $this->normalizeEmbedding($incoming);
 
+        Log::info('VERIFY EMBEDDING', [
+            'embedding' => $incoming
+        ]);
+
+        if (!empty($rawCaptures)) {
+            foreach ($rawCaptures as $index => $capture) {
+                Log::info('RAW CAPTURE ' . ($index + 1), [
+                    'data' => $capture
+                ]);
+            }
+        }
+
         $scores = [];
 
         foreach ($storedEmbeddings as $saved) {
-
             $stored = $this->normalizeEmbedding($saved->embedding);
-
             $score = $this->cosineSimilarity($incoming, $stored);
-
             $scores[] = $score;
         }
 
@@ -94,9 +103,9 @@ class FaceService
         return max(-1.0, min(1.0, $dot / $denominator));
     }
 
-    public function verifyWithThreshold(int $userId, array $embedding, float $threshold, int $requiredPass): array
+    public function verifyWithThreshold(int $userId, array $embedding, float $threshold, int $requiredPass, ?array $rawCaptures = null): array
     {
-        $result = $this->verifyEmbedding($userId, $embedding);
+        $result = $this->verifyEmbedding($userId, $embedding, $rawCaptures);
 
         $scores = $result['scores'];
 

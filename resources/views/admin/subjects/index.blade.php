@@ -6,8 +6,8 @@
 
 @section('content')
 
-<br>
-<h4>Tabel Mata Pelajaran</h4>
+    <br>
+    <h4>Tabel Mata Pelajaran</h4>
     <div class="card">
         <div class="card-body">
             <button class="btn btn-primary mb-3" id="add">Tambah Mapel</button>
@@ -90,17 +90,45 @@
                 let url = id ? '/admin/subjects/update/' + id :
                     '/admin/subjects/store';
 
-                $.post(url, {
-                    _token: '{{ csrf_token() }}',
-                    name: $('#name').val()
-                }, function() {
+                $.ajax({
+                    url: url,
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        name: $('#name').val()
+                    },
 
-                    $('#modal').modal('hide');
-                    table.ajax.reload();
+                    success: function() {
 
-                    Swal.fire('Berhasil!', '', 'success');
+                        $('#modal').modal('hide');
+                        table.ajax.reload();
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Berhasil!',
+                            text: 'Data mata pelajaran berhasil disimpan'
+                        });
+                    },
+
+                    error: function(xhr) {
+
+                        if (xhr.status === 422) {
+
+                            let errors = xhr.responseJSON.errors;
+                            let pesan = '';
+
+                            $.each(errors, function(key, value) {
+                                pesan += value[0] + '<br>';
+                            });
+
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Data Tidak Valid',
+                                html: pesan
+                            });
+                        }
+                    }
                 });
-
             });
 
             // EDIT
@@ -129,7 +157,7 @@
                             type: 'POST',
                             data: {
                                 _token: '{{ csrf_token() }}',
-                                _method: 'DELETE' // 🔥 penting
+                                _method: 'DELETE'
                             },
                             success: function() {
                                 table.ajax.reload();
@@ -139,7 +167,6 @@
                     }
                 });
             });
-
         });
     </script>
 @stop

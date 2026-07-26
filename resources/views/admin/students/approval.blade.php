@@ -1,12 +1,12 @@
 @extends('adminlte::page')
 
-@section('title', 'Validasi Murid')
+@section('title', 'Validasi Siswa')
 
 @section('plugins.Datatables', true)
 
 @section('content')
     <br>
-    <h4>Tabel Validasi Murid</h4>
+    <h4>Tabel Validasi Siswa</h4>
 
     <div class="card">
         <div class="card-body">

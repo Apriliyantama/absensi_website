@@ -1,12 +1,12 @@
 @extends('adminlte::page')
 
-@section('title', 'Data Murid')
+@section('title', 'Data Siswa')
 
 @section('plugins.Datatables', true)
 
 @section('content')
     <br>
-    <h4>Tabel Data Murid</h4>
+    <h4>Tabel Data Siswa</h4>
     <div class="card">
         <div class="card-body">
             <button class="btn btn-success mb-3" id="btnPromote">
@@ -88,7 +88,6 @@
                         </div>
                         <div class="form-group">
                             <label>Kelas</label>
-
                             <select id="class_id" class="form-control">
                                 @foreach ($classes as $class)
                                     <option value="{{ $class->id }}">
@@ -146,21 +145,19 @@
                 },
                 {
                     data: 'email',
-                    name: 'user.email'
+                    name: 'email'
                 },
                 {
                     data: 'class_name',
-                    name: 'classRelation.name'
+                    name: 'class_name'
                 },
                 {
                     data: 'status_badge',
-                    name: 'user.status',
                     orderable: false,
                     searchable: false
                 },
                 {
                     data: 'action',
-                    name: 'action',
                     orderable: false,
                     searchable: false
                 }
@@ -248,7 +245,6 @@
                 success: function(response) {
 
                     $('#modalStudent').modal('hide');
-
                     $('#studentTable')
                         .DataTable()
                         .ajax.reload();
@@ -265,7 +261,6 @@
         });
 
         $('#btnPromote').click(function() {
-
             $('#promoteModal').modal('show');
         });
 

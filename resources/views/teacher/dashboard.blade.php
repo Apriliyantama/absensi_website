@@ -85,9 +85,9 @@
                 });
             @endphp
 
-            {{-- ================= ACTIVE SESSION ================= --}}
+            {{-- ACTIVE SESSION --}}
             @if ($activeSchedule)
-                <div class="card shadow-sm border-0 rounded-lg"> //change shadow-sm border-0 rounded-lg
+                <div class="card shadow-sm border-0 rounded-lg">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center">
                             <div>
@@ -161,7 +161,7 @@
                         </div>
                     </div>
                 </div>
-                {{-- ================= NEXT SCHEDULE ================= --}}
+                {{-- NEXT SCHEDULE --}}
             @elseif ($nextSchedule)
                 <div class="card shadow-sm border-0 rounded-lg">
                     <div class="card-body">
@@ -231,7 +231,7 @@
 @section('js')
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
-        // ================= START ATTENDANCE =================
+        // START ATTENDANCE
         $(document).on('click', '.btn-start-attendance', function() {
             let button = $(this);
             let scheduleId = button.data('id');
@@ -291,7 +291,7 @@
             });
         });
 
-        // ================= UPDATE STATUS =================
+        // UPDATE STATUS
         $(document).on('change', '.attendance-radio', function() {
             let radio = $(this);
             $.ajax({
@@ -315,7 +315,7 @@
             });
         });
 
-        // ================= END ATTENDANCE =================
+        // END ATTENDANCE
         $(document).on('click', '.btn-end-attendance', function() {
             let button = $(this);
             let id = button.data('id');

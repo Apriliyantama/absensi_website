@@ -26,12 +26,10 @@ class AuthenticatedSessionController extends Controller
     public function store(LoginRequest $request): RedirectResponse
     {
         $request->authenticate();
-
         $request->session()->regenerate();
-
         $user = Auth::user();
 
-        // ❗ CEK STATUS DULU
+        // CEK STATUS
         if ($user->status !== 'approved') {
             Auth::logout();
 
@@ -58,11 +56,8 @@ class AuthenticatedSessionController extends Controller
     public function destroy(Request $request): RedirectResponse
     {
         Auth::guard('web')->logout();
-
         $request->session()->invalidate();
-
         $request->session()->regenerateToken();
-
         return redirect('/login');
     }
 }

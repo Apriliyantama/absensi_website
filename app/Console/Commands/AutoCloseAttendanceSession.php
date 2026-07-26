@@ -23,9 +23,7 @@ class AutoCloseAttendanceSession extends Command
         $this->info('TOTAL SESSION: ' . $sessions->count());
 
         foreach ($sessions as $session) {
-
             $this->info("CHECK SESSION {$session->id}");
-
             if (!$session->schedule) {
                 continue;
             }
@@ -36,18 +34,15 @@ class AutoCloseAttendanceSession extends Command
             );
 
             if ($now->greaterThanOrEqualTo($endTime)) {
-
                 $session->update([
                     'status' => 'closed',
                     'end_time' => now(),
                 ]);
-
                 $this->info(
                     "Session {$session->id} auto closed"
                 );
             }
         }
-
         return Command::SUCCESS;
     }
 }

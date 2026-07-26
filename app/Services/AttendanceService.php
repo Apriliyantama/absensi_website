@@ -24,10 +24,11 @@ class AttendanceService
     {
         return DB::transaction(function () use ($user) {
 
+            $classId = $user->student->class_id;
             $session = AttendanceSession::where('date', now()->toDateString())
                 ->where('status', 'open')
-                ->whereHas('schedule', function ($q) use ($user) {
-                    $q->where('class_id', $user->class_id);
+                ->whereHas('schedule', function ($q) use ($classId) {
+                    $q->where('class_id', $classId);
                 })
                 ->first();
 
@@ -94,8 +95,9 @@ class AttendanceService
 
         // toleransi 1 jam
         $limit = $start->copy()
-            // ->addHour()
-            ->addMinutes(5)
+            ->addHour()
+            // test terlambat 5 menit
+            // ->addMinutes(5)
             ->addSeconds(10);
 
         return $now->lte($limit)

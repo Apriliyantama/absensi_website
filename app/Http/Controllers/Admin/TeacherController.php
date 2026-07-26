@@ -9,6 +9,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class TeacherController extends Controller
 {
@@ -34,12 +35,18 @@ class TeacherController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name'  => 'required',
-            'nip'   => 'nullable',
-            'email' => 'required|email|unique:users,email',
+            'name' => 'required',
+            'nip' => 'required|unique:teachers,nip',
+            'email' => 'required|email|unique:teachers,email|unique:users,email',
+        ], [
+            'nip.required' => 'NIP wajib diisi.',
+            'nip.unique' => 'NIP sudah digunakan.',
+            'email.required' => 'Email wajib diisi.',
+            'email.email' => 'Format email tidak valid.',
+            'email.unique' => 'Email sudah digunakan.',
         ]);
 
-        // generate password clean (ABC123)
+        // generate password
         $password = strtoupper(Str::random(3)) . rand(100, 999);
 
         // buat akun user (login)
@@ -62,26 +69,34 @@ class TeacherController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Data guru & akun berhasil dibuat',
-            'password' => $password // tampilkan ke frontend
+            'password' => $password
         ]);
     }
 
     public function edit(int $id)
     {
         $teacher = Teacher::findOrFail($id);
-
         return response()->json($teacher);
     }
 
     public function update(Request $request, int $id)
     {
-        $request->validate([
-            'name'  => 'required',
-            'nip'   => 'nullable',
-            'email' => 'nullable|email',
-        ]);
-
         $teacher = Teacher::findOrFail($id);
+        $request->validate([
+            'name' => 'required',
+
+            'nip' => [
+                'required',
+                Rule::unique('teachers', 'nip')->ignore($teacher->id),
+            ],
+
+            'email' => [
+                'required',
+                'email',
+                Rule::unique('teachers', 'email')->ignore($teacher->id),
+                Rule::unique('users', 'email')->ignore($teacher->user_id),
+            ],
+        ]);
 
         $teacher->update([
             'name'  => $request->name,
@@ -89,10 +104,9 @@ class TeacherController extends Controller
             'email' => $request->email,
         ]);
 
-        // update juga user kalau ada
         if ($teacher->user) {
             $teacher->user->update([
-                'name' => $request->name,
+                'name'  => $request->name,
                 'email' => $request->email,
             ]);
         }

@@ -42,10 +42,8 @@ class DashboardController extends Controller
         $classTotals = [];
 
         foreach (Classes::all() as $class) {
-
             $classLabels[] =
                 $class->grade . ' ' . $class->name;
-
             $classTotals[] =
                 Student::where(
                     'class_id',

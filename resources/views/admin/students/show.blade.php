@@ -122,7 +122,7 @@
 
                     Swal.fire(
                         'Berhasil',
-                        'Data murid diperbarui',
+                        'Data siswa diperbarui',
                         'success'
                     );
                 }

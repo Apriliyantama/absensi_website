@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+// GPS area radius
 class LocationService
 {
     public function calculateDistance($lat1, $lon1, $lat2, $lon2)

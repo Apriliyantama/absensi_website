@@ -14,7 +14,7 @@ return [
     |
     */
 
-    'title' => 'AdminLTE 3',
+    'title' => '',
     'title_prefix' => '',
     'title_postfix' => '',
 
@@ -63,12 +63,12 @@ return [
     |
     */
 
-    'logo' => '<b>Admin</b>LTE',
-    'logo_img' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
-    'logo_img_class' => 'brand-image img-circle elevation-3',
+    'logo' => '',
+    'logo_img' => '',
+    'logo_img_class' => '',
     'logo_img_xl' => null,
-    'logo_img_xl_class' => 'brand-image-xs',
-    'logo_img_alt' => 'Admin Logo',
+    'logo_img_xl_class' => '',
+    'logo_img_alt' => '',
 
     /*
     |--------------------------------------------------------------------------
@@ -83,16 +83,16 @@ return [
     |
     */
 
-    'auth_logo' => [
-        'enabled' => false,
-        'img' => [
-            'path' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
-            'alt' => 'Auth Logo',
-            'class' => '',
-            'width' => 50,
-            'height' => 50,
-        ],
-    ],
+    // 'auth_logo' => [
+    //     'enabled' => false,
+    //     'img' => [
+    //         'path' => 'vendor/adminlte/dist/img/AdminLTELogo.png',
+    //         'alt' => 'Auth Logo',
+    //         'class' => '',
+    //         'width' => 50,
+    //         'height' => 50,
+    //     ],
+    // ],
 
     /*
     |--------------------------------------------------------------------------
@@ -191,7 +191,7 @@ return [
     */
 
     'classes_body' => '',
-    'classes_brand' => '',
+    'classes_brand' => 'd-none',
     'classes_brand_text' => '',
     'classes_content_wrapper' => '',
     'classes_content_header' => '',
@@ -257,7 +257,7 @@ return [
     */
 
     'use_route_url' => false,
-    'dashboard_url' => 'home',
+    'dashboard_url' => null,
     'logout_url' => 'logout',
     'login_url' => 'login',
     'register_url' => 'register',
@@ -333,20 +333,24 @@ return [
             'icon' => 'fas fa-user-tie',
             'can' => 'admin'
         ],
-        ['header' => 'Menu Murid'],
+        [   'header' => 'Menu Siswa',
+            'can' => 'admin'
+        ],
         [
-            'text' => 'Validasi Murid',
+            'text' => 'Validasi Siswa',
             'url' => 'admin/students/approval',
             'icon' => 'fas fa-user-check',
             'can' => 'admin'
         ],
         [
-            'text' => 'Data Murid',
+            'text' => 'Data Siswa',
             'url' => 'admin/students',
             'icon' => 'fas fa-user',
             'can' => 'admin'
         ],
-        ['header' => 'Kelas & Mapel'],
+        [   'header' => 'Kelas & Mapel',
+            'can' => 'admin'
+        ],
         [
             'text' => 'Kelas',
             'url' => 'admin/classes',
@@ -365,7 +369,9 @@ return [
             'icon' => 'fas fa-clock',
             'can' => 'admin'
         ],
-        ['header' => 'Konfigurasi'],
+        [   'header' => 'Konfigurasi',
+            'can' => 'admin'
+        ],
         [
             'text' => 'Metadata',
             'url' => 'admin/attendance-setting',

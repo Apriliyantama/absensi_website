@@ -37,11 +37,9 @@
                     <h5 id="modal-title">Tambah Jadwal</h5>
                     <button type="button" class="close" data-dismiss="modal">&times;</button>
                 </div>
-
                 <div class="modal-body">
 
                     <input type="hidden" id="id">
-
                     <select id="class_id" class="form-control mb-2">
                         <option value="">Pilih Kelas</option>
                         @foreach ($classes as $c)
@@ -59,7 +57,9 @@
                     <select id="teacher_id" class="form-control mb-2">
                         <option value="">Pilih Guru</option>
                         @foreach ($teachers as $t)
-                            <option value="{{ $t->id }}">{{ $t->name }}</option>
+                            <option value="{{ $t->id }}">
+                                {{ $t->nip }} - {{ $t->name }}
+                            </option>
                         @endforeach
                     </select>
 
@@ -75,13 +75,11 @@
 
                     <input type="time" id="start_time" class="form-control mb-2">
                     <input type="time" id="end_time" class="form-control mb-2">
-
                 </div>
 
                 <div class="modal-footer">
                     <button class="btn btn-primary" id="save">Simpan</button>
                 </div>
-
             </div>
         </div>
     </div>
@@ -103,19 +101,24 @@
                         searchable: false
                     },
                     {
-                        data: 'class'
+                        data: 'class',
+                        name: 'class'
                     },
                     {
-                        data: 'subject'
+                        data: 'subject',
+                        name: 'subject'
                     },
                     {
-                        data: 'teacher'
+                        data: 'teacher',
+                        name: 'teacher'
                     },
                     {
-                        data: 'day'
+                        data: 'day',
+                        name: 'day'
                     },
                     {
-                        data: 'time'
+                        data: 'time',
+                        name: 'time'
                     },
                     {
                         data: 'action',

@@ -57,6 +57,31 @@ class ScheduleController extends Controller
                 $row->start_time . ' - ' . $row->end_time
             )
 
+            ->orderColumn('class', function ($query, $order) {
+                $query->leftJoin('classes', 'classes.id', '=', 'lesson_schedules.class_id')
+                    ->orderBy('classes.grade', $order)
+                    ->orderBy('classes.name', $order);
+            })
+
+            ->orderColumn('subject', function ($query, $order) {
+                $query->leftJoin('subjects', 'subjects.id', '=', 'lesson_schedules.subject_id')
+                    ->orderBy('subjects.name', $order);
+            })
+
+            ->orderColumn('teacher', function ($query, $order) {
+                $query->leftJoin('teachers', 'teachers.id', '=', 'lesson_schedules.teacher_id')
+                    ->orderBy('teachers.name', $order);
+            })
+
+            ->orderColumn('day', function ($query, $order) {
+                $query->orderBy('day_of_week', $order);
+            })
+
+            ->orderColumn('time', function ($query, $order) {
+                $query->orderBy('start_time', $order)
+                    ->orderBy('end_time', $order);
+            })
+
             // Seacrh
             ->filter(function ($query) use ($request) {
 
@@ -95,7 +120,6 @@ class ScheduleController extends Controller
                         if (isset($days[$searchDay])) {
                             $q->orWhere('day_of_week', $days[$searchDay]);
                         }
-
                         // jam
                         $q->orWhere('start_time', 'like', "%{$search}%")
                             ->orWhere('end_time', 'like', "%{$search}%");
@@ -155,7 +179,6 @@ class ScheduleController extends Controller
         }
 
         LessonSchedule::create($request->all());
-
         return response()->json(['success' => true]);
     }
 
@@ -176,7 +199,7 @@ class ScheduleController extends Controller
         ]);
 
         $exists = LessonSchedule::where('day_of_week', $request->day_of_week)
-            ->where('id', '!=', $id) // exclude dirinya sendiri
+            ->where('id', '!=', $id)
             ->where(function ($q) use ($request) {
 
                 $q->where(function ($q2) use ($request) {
@@ -204,14 +227,12 @@ class ScheduleController extends Controller
         }
 
         LessonSchedule::findOrFail($id)->update($request->all());
-
         return response()->json(['success' => true]);
     }
 
     public function destroy($id)
     {
         LessonSchedule::findOrFail($id)->delete();
-
         return response()->json(['success' => true]);
     }
 }

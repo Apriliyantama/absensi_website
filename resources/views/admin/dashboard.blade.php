@@ -62,7 +62,7 @@
     </div>
 
     {{-- CHART --}}
-    <div class="row">
+    {{-- <div class="row">
 
         <div class="col-lg-6 col-12">
             <div class="card shadow-sm">
@@ -100,80 +100,80 @@
             </div>
         </div>
 
-    </div>
+    </div> --}}
 
 @stop
 
 @section('js')
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script>
-        new Chart(
-            document.getElementById('attendanceChart'), {
-                type: 'doughnut',
-                data: {
-                    labels: [
-                        'Hadir',
-                        'Izin',
-                        'Sakit',
-                        'Alfa'
-                    ],
+        // new Chart(
+        //     document.getElementById('attendanceChart'), {
+        //         type: 'doughnut',
+        //         data: {
+        //             labels: [
+        //                 'Hadir',
+        //                 'Izin',
+        //                 'Sakit',
+        //                 'Alfa'
+        //             ],
 
-                    datasets: [{
-                        label: 'Jumlah',
-                        data: [
-                            {{ $hadir }},
-                            {{ $izin }},
-                            {{ $sakit }},
-                            {{ $alfa }}
-                        ],
-                        backgroundColor: [
-                            '#28a745',
-                            '#17a2b8',
-                            '#ffc107',
-                            '#dc3545'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
-                }
-            }
-        );
+        //             datasets: [{
+        //                 label: 'Jumlah',
+        //                 data: [
+        //                     {{ $hadir }},
+        //                     {{ $izin }},
+        //                     {{ $sakit }},
+        //                     {{ $alfa }}
+        //                 ],
+        //                 backgroundColor: [
+        //                     '#28a745',
+        //                     '#17a2b8',
+        //                     '#ffc107',
+        //                     '#dc3545'
+        //                 ]
+        //             }]
+        //         },
+        //         options: {
+        //             responsive: true,
+        //             maintainAspectRatio: false,
+        //             plugins: {
+        //                 legend: {
+        //                     position: 'bottom'
+        //                 }
+        //             }
+        //         }
+        //     }
+        // );
 
-        new Chart(
-            document.getElementById('classChart'), {
-                type: 'pie',
-                data: {
-                    labels: @json($classLabels),
-                    datasets: [{
-                        label: 'Jumlah Murid',
-                        data: @json($classTotals),
-                        backgroundColor: [
-                            '#007bff',
-                            '#28a745',
-                            '#ffc107',
-                            '#dc3545',
-                            '#6f42c1',
-                            '#fd7e14'
-                        ]
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: {
-                            position: 'bottom'
-                        }
-                    }
-                }
-            }
-        );
+        // new Chart(
+        //     document.getElementById('classChart'), {
+        //         type: 'pie',
+        //         data: {
+        //             labels: @json($classLabels),
+        //             datasets: [{
+        //                 label: 'Jumlah Murid',
+        //                 data: @json($classTotals),
+        //                 backgroundColor: [
+        //                     '#007bff',
+        //                     '#28a745',
+        //                     '#ffc107',
+        //                     '#dc3545',
+        //                     '#6f42c1',
+        //                     '#fd7e14'
+        //                 ]
+        //             }]
+        //         },
+        //         options: {
+        //             responsive: true,
+        //             maintainAspectRatio: false,
+        //             plugins: {
+        //                 legend: {
+        //                     position: 'bottom'
+        //                 }
+        //             }
+        //         }
+        //     }
+        // );
     </script>
 @stop
