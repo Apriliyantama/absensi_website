@@ -260,4 +260,61 @@ class AttendanceController extends Controller
             ] : null
         ]);
     }
+    // JADWAL KESELURUHAN HARI INI UNTUK SCREEN 2
+    public function getTodaySchedules(Request $request)
+    {
+        // 1. Ambil tanggal dari parameter, jika tidak ada gunakan hari ini (real-time)
+        $requestedDate = $request->input('date');
+        $dateTarget = $requestedDate ? \Carbon\Carbon::parse($requestedDate) : now();
+        
+        $dayOfWeek = $dateTarget->dayOfWeekIso; 
+        $user = $request->user();
+        $classId = $user->student->class_id;
+
+        // 2. Ambil jadwal
+        $schedules = LessonSchedule::with(['subject', 'teacher', 'class'])
+            ->where('class_id', $classId)
+            ->where('day_of_week', $dayOfWeek)
+            ->orderBy('start_time', 'asc')
+            ->get();
+
+        // 3. Format response
+        $data = $schedules->map(function ($schedule) use ($user, $dateTarget) {
+            
+            $session = AttendanceSession::where('lesson_schedule_id', $schedule->id)
+                ->whereDate('date', $dateTarget->toDateString())
+                ->latest()
+                ->first();
+
+            $isAttended = false;
+            if ($session) {
+                $isAttended = Attendance::where('user_id', $user->id)
+                    ->where('attendance_session_id', $session->id)
+                    ->exists();
+            }
+            $isToday = $dateTarget->isToday();
+            $currentTime = now()->format('H:i:s');
+            // is_active akan bernilai FALSE jika user melihat jadwal besok/kemarin
+            $isActive = $isToday && ($currentTime >= $schedule->start_time && $currentTime <= $schedule->end_time);
+
+            return [
+                'id' => $schedule->id,
+                'subject' => $schedule->subject->name,
+                'teacher' => $schedule->teacher->name,
+                'class' => $schedule->class->grade . ' ' . $schedule->class->name,
+                'start_time' => date('H:i', strtotime($schedule->start_time)),
+                'end_time' => date('H:i', strtotime($schedule->end_time)),
+                'is_active' => $isActive, 
+                'session_open' => $session && $session->status === 'open',
+                'is_attended' => $isAttended,
+                'gps_enabled' => $session ? $session->gps_enabled : false,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Daftar jadwal pelajaran',
+            'data' => $data
+        ]);
+    }
 }

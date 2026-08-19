@@ -23,6 +23,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/attendance/current', [AttendanceController::class, 'getCurrentLessonWithStatus']);
     Route::get('/attendance/next', [AttendanceController::class, 'next']);
     Route::get('/attendance/today', [AttendanceController::class, 'todayStatus']);
+    Route::get('/attendance/schedules/today', [AttendanceController::class, 'getTodaySchedules']);
 
     Route::get('/face/me', function (Request $request) {
         return \App\Models\FaceEmbedding::where('user_id', $request->user()->id)->latest()->first();
