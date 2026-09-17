@@ -66,7 +66,6 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
     // Teacher
     Route::prefix('teachers')->name('teachers.')->group(function () {
-
         Route::get('/', [TeacherController::class, 'index'])->name('index');
         Route::get('/data', [TeacherController::class, 'data'])->name('data');
         Route::post('/store', [TeacherController::class, 'store'])->name('store');
@@ -77,10 +76,8 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
     // Student Validity
     Route::prefix('students')->name('students.')->group(function () {
-
         Route::get('/approval', [StudentApprovalController::class, 'index'])->name('approval');
         Route::get('/approval/data', [StudentApprovalController::class, 'data'])->name('approval.data');
-
         Route::post('/approve/{id}', [StudentApprovalController::class, 'approve'])->name('approve');
         Route::post('/reject/{id}', [StudentApprovalController::class, 'reject'])->name('reject');
     });
@@ -109,7 +106,6 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
     //Subject
     Route::prefix('subjects')->name('subjects.')->group(function () {
-
         Route::get('/', [SubjectController::class, 'index'])->name('index');
         Route::get('/data', [SubjectController::class, 'data'])->name('data');
         Route::post('/store', [SubjectController::class, 'store'])->name('store');
@@ -120,23 +116,18 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 
     //LessonSchedule
     Route::prefix('schedules')->name('schedules.')->group(function () {
-
         Route::get('/', [ScheduleController::class, 'index'])->name('index');
         Route::get('/data', [ScheduleController::class, 'data'])->name('data');
-
         Route::post('/store', [ScheduleController::class, 'store'])->name('store');
         Route::get('/edit/{id}', [ScheduleController::class, 'edit'])->name('edit');
         Route::post('/update/{id}', [ScheduleController::class, 'update'])->name('update');
-
         Route::delete('/delete/{id}', [ScheduleController::class, 'destroy'])->name('destroy');
     });
 
     //Attendance-setting
     Route::prefix('attendance-setting')->name('attendance.setting.')->group(function () {
-
         Route::get('/', [AttendanceSettingController::class, 'index'])
             ->name('index');
-
         Route::post('/store', [AttendanceSettingController::class, 'store'])
             ->name('store');
     });
@@ -145,22 +136,16 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
 Route::middleware(['auth', 'teacher'])->prefix('teacher')->name('teacher.')->group(function () {
     Route::get('/dashboard', [TeacherDashboardController::class, 'index'])
         ->name('dashboard');
-
     Route::post('/attendance/start', [\App\Http\Controllers\Teacher\AttendanceSessionController::class, 'start'])
         ->name('attendance.start');
-
     Route::post('/attendance/end/{id}', [\App\Http\Controllers\Teacher\AttendanceSessionController::class, 'end'])
         ->name('attendance.end');
-
     Route::get('/attendance-overview', [AttendanceOverviewController::class, 'index'])
         ->name('attendance.overview');
-
     Route::get('/attendance-overview/{id}', [AttendanceOverviewController::class, 'show'])
         ->name('attendance.overview.show');
-
     Route::post('/attendance/update-status', [AttendanceSessionController::class, 'updateStatus'])
         ->name('attendance.update-status');
-
     Route::post('/attendance-session/end/{id}', [AttendanceSessionController::class, 'end'])
         ->name('attendance.end');
 });

@@ -138,13 +138,9 @@ class AttendanceController extends Controller
     public function getCurrentLessonWithStatus()
     {
         $now = now();
-
         $today = $now->dayOfWeekIso;
-
         $currentTime = $now->format('H:i:s');
-
         $user = request()->user();
-
         // CARI JADWAL BERDASARKAN JAM
         $schedule = LessonSchedule::with([
             'subject',
@@ -212,14 +208,10 @@ class AttendanceController extends Controller
     public function next(Request $request)
     {
         $now = now();
-
         // sesuaikan dengan DB
         $today = $now->dayOfWeekIso;
-
         $currentTime = $now->format('H:i:s');
-
         $user = $request->user();
-
         $next = \App\Models\LessonSchedule::where('day_of_week', $today)
             ->where('class_id', $user->student->class_id)
             ->where('start_time', '>', $currentTime)
@@ -247,19 +239,81 @@ class AttendanceController extends Controller
     public function todayStatus(Request $request)
     {
         $user = $request->user();
+        $classId = $user->student->class_id;
 
-        $attendance = Attendance::where('user_id', $user->id)
-            ->where('date', today()->toDateString())
-            ->latest()
-            ->first();
+        // TANGKAP PARAMETER DARI FLUTTER
+        $scheduleId = $request->query('schedule_id');
+        // Jika tidak ada tanggal yang dikirim, gunakan hari ini
+        $requestedDate = $request->query('date') ? \Carbon\Carbon::parse($request->query('date')) : today();
 
+        // 1. Ambil Status Kehadiran SPESIFIK (Hanya untuk jadwal yang diklik)
+        $specificAttendance = null;
+        if ($scheduleId) {
+            $session = \App\Models\AttendanceSession::where('lesson_schedule_id', $scheduleId)
+                ->whereDate('date', $requestedDate->toDateString())
+                ->latest()
+                ->first();
+
+            if ($session) {
+                $specificAttendance = Attendance::where('user_id', $user->id)
+                    ->where('attendance_session_id', $session->id)
+                    ->first();
+            }
+        }
+
+        // Tentukan Teks Status
+        $statusTeks = 'Belum Absen';
+        $checkInTime = null;
+        
+        if ($specificAttendance) {
+            $statusTeks = ucfirst($specificAttendance->status);
+            $checkInTime = $specificAttendance->check_in_time ? date('H:i', strtotime($specificAttendance->check_in_time)) : null;
+        }
+
+        // 2. Ambil Patokan Jadwal Total
+        $schedules = LessonSchedule::where('class_id', $classId)->get();
+
+        // ================= HITUNG MINGGUAN =================
+        $startOfWeek = now()->startOfWeek(); 
+        $endOfWeek = now()->endOfWeek();
+        
+        $mingguanHadir = Attendance::where('user_id', $user->id)
+            ->whereBetween('date', [$startOfWeek->toDateString(), $endOfWeek->toDateString()])
+            ->whereIn('status', ['hadir', 'terlambat']) 
+            ->count();
+            
+        $mingguanTotal = $schedules->count(); 
+
+        // ================= HITUNG BULANAN =================
+        $startOfMonth = now()->startOfMonth();
+        $endOfMonth = now()->endOfMonth();
+        
+        $bulananHadir = Attendance::where('user_id', $user->id)
+            ->whereBetween('date', [$startOfMonth->toDateString(), $endOfMonth->toDateString()])
+            ->whereIn('status', ['hadir', 'terlambat'])
+            ->count();
+            
+        $bulananTotal = 0;
+        for ($date = $startOfMonth->copy(); $date->lte($endOfMonth); $date->addDay()) {
+            $dayOfWeekIso = $date->dayOfWeekIso; 
+            $bulananTotal += $schedules->where('day_of_week', $dayOfWeekIso)->count();
+        }
+
+        // ================= KEMBALIKAN KE FLUTTER =================
         return response()->json([
-            'attendance' => $attendance ? [
-                'status' => $attendance->status,
-                'check_in_time' => $attendance->check_in_time,
-            ] : null
+            'status_hari_ini' => $statusTeks, // Sekarang sudah akurat per mata pelajaran!
+            'check_in_time' => $checkInTime,
+            'mingguan' => [
+                'hadir' => $mingguanHadir,
+                'total_jadwal' => $mingguanTotal > 0 ? $mingguanTotal : 1, 
+            ],
+            'bulanan' => [
+                'hadir' => $bulananHadir,
+                'total_jadwal' => $bulananTotal > 0 ? $bulananTotal : 1,
+            ]
         ]);
     }
+    
     // JADWAL KESELURUHAN HARI INI UNTUK SCREEN 2
     public function getTodaySchedules(Request $request)
     {
@@ -306,6 +360,7 @@ class AttendanceController extends Controller
                 'end_time' => date('H:i', strtotime($schedule->end_time)),
                 'is_active' => $isActive, 
                 'session_open' => $session && $session->status === 'open',
+                'session_id' => $session ? $session->id : null,
                 'is_attended' => $isAttended,
                 'gps_enabled' => $session ? $session->gps_enabled : false,
             ];
@@ -315,6 +370,56 @@ class AttendanceController extends Controller
             'success' => true,
             'message' => 'Daftar jadwal pelajaran',
             'data' => $data
+        ]);
+    }
+
+    // FUNGSI RIWAYAT ABSENSI =================
+    public function history(Request $request)
+    {
+        $user = $request->user();
+
+        // Tangkap parameter bulan dan tahun (Jika kosong, gunakan bulan/tahun saat ini)
+        $month = $request->query('month', now()->month);
+        $year = $request->query('year', now()->year);
+
+        // Ambil riwayat absensi dengan relasi jadwal
+        $history = Attendance::with(['session.schedule.subject']) // Ambil relasi nama mata pelajaran
+            ->where('user_id', $user->id)
+            ->whereMonth('date', $month)
+            ->whereYear('date', $year)
+            ->orderBy('date', 'desc') // Urutkan dari yang paling baru
+            ->orderBy('check_in_time', 'desc')
+            ->paginate(15); // Ambil 15 data per halaman agar tidak berat!
+
+        // Format ulang data agar rapi dan mudah dibaca oleh Flutter
+        $history->getCollection()->transform(function ($attendance) {
+            return [
+                'id' => $attendance->id,
+                'date' => $attendance->date,
+                'subject' => $attendance->session->schedule->subject->name ?? 'Mata Pelajaran',
+                'status' => ucfirst($attendance->status),
+                'check_in_time' => $attendance->check_in_time ? date('H:i', strtotime($attendance->check_in_time)) : '-',
+                'method' => $attendance->method,
+            ];
+        });
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Data riwayat berhasil diambil',
+            'data' => $history // Otomatis mengirimkan format pagination (current_page, data, last_page, dll)
+        ]);
+    }
+
+    // FUNGSI GET PROFIL LENGKAP =================
+    public function profile(Request $request)
+    {
+        // Fungsi 'load' akan menarik data relasi dari tabel 'student' secara otomatis
+        $user = $request->user()->load('student'); 
+        
+        return response()->json([
+            'success' => true,
+            'message' => 'Data profil berhasil diambil',
+            'data' => $user
         ]);
     }
 }

@@ -333,7 +333,8 @@ return [
             'icon' => 'fas fa-user-tie',
             'can' => 'admin'
         ],
-        [   'header' => 'Menu Siswa',
+        [
+            'header' => 'Menu Siswa',
             'can' => 'admin'
         ],
         [
@@ -348,7 +349,8 @@ return [
             'icon' => 'fas fa-user',
             'can' => 'admin'
         ],
-        [   'header' => 'Kelas & Mapel',
+        [
+            'header' => 'Kelas & Mapel',
             'can' => 'admin'
         ],
         [
@@ -369,7 +371,8 @@ return [
             'icon' => 'fas fa-clock',
             'can' => 'admin'
         ],
-        [   'header' => 'Konfigurasi',
+        [
+            'header' => 'Konfigurasi',
             'can' => 'admin'
         ],
         [
@@ -377,6 +380,20 @@ return [
             'url' => 'admin/attendance-setting',
             'icon' => 'fas fa-map-marker-alt',
             'can' => 'admin'
+        ],
+        [
+            'text'        => 'Profil Saya',
+            'url'         => '#',
+            'icon'        => 'fas fa-fw fa-user',
+            'topnav_user' => true,
+            'id'          => 'btnUbahProfil',
+        ],
+        [
+            'text' => 'Ubah Password',
+            'url' => '#',
+            'icon' => 'fas fa-fw fa-lock',
+            'topnav_user' => true,
+            'id' => 'btnUbahPassword',
         ],
 
         // ===== TEACHER MENU =====
@@ -392,11 +409,6 @@ return [
             'icon' => 'fas fa-history',
             'can' => 'teacher'
         ],
-        // [
-        //     'text' => 'change_password',
-        //     'url' => 'admin/settings',
-        //     'icon' => 'fas fa-fw fa-lock',
-        // ],
         // [
         //     'text' => 'multilevel',
         //     'icon' => 'fas fa-fw fa-share',
